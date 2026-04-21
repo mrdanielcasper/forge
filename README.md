@@ -2,6 +2,10 @@
 
 This repository is a lightweight operating system for building a one-person software company. It is designed to keep strategy, product definition, design, engineering, and launch work tied to durable artifacts instead of ad hoc chat history.
 
+## First Time Setup
+1. Copy `.env.example` to `.env` and add your API keys.
+2. Run `git config core.hooksPath scripts/githooks` to activate the AI safety nets.
+
 ## What This Repo Is For
 - Turning raw customer pain into testable opportunities.
 - Converting validated opportunities into scoped product briefs and contracts.
@@ -33,7 +37,7 @@ docs/
     architecture.md
     briefs/
     contracts/
-    adr/
+    adr/g
   ops/
     launch_checklist.md
     experiment_log.md

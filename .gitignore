@@ -1,0 +1,101 @@
+# ==========================================
+# Secrets and Environment Variables
+# ==========================================
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.*
+!.env.example
+
+# Cryptographic keys and certificates
+*.pem
+*.key
+*.cert
+
+# ==========================================
+# Node.js & JavaScript
+# ==========================================
+node_modules/
+.npm/
+
+# Dependency logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Caches
+.eslintcache
+.stylelintcache
+*.tsbuildinfo
+
+# ==========================================
+# Build & HTML/Web Outputs
+# ==========================================
+# Covers Vite, Webpack, Parcel, Next.js, Nuxt, etc.
+dist/
+build/
+out/
+.next/
+.nuxt/
+.cache/
+.parcel-cache/
+
+# ==========================================
+# Testing & Coverage
+# ==========================================
+coverage/
+.nyc_output/
+cypress/videos/
+cypress/screenshots/
+playwright-report/
+test-results/
+
+# ==========================================
+# Python (Orchestrator)
+# ==========================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+venv/
+env/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+.pytest_cache/
+htmlcov/
+
+# ==========================================
+# General Logs & Temp Files (Best Practices)
+# ==========================================
+logs/
+*.log
+*.bak
+*.tmp
+*.temp
+*.swp
+*.swo
+
+# ==========================================
+# OS Generated Files
+# ==========================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# ==========================================
+# IDEs and Editors
+# ==========================================
+.vscode/
+.idea/
+.settings/
+*.sublime-workspace
