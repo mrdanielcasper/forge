@@ -17,3 +17,8 @@
 ## Strategy & Ops
 - **Test Types:** Never recommend an A/B test unless the feature targets the public landing page. Deep-app features lack the traffic for statistical significance; always use Pre/Post Cohorts.
 - **Marketing Copy:** Never use the word "Revolutionary" in any changelog or email blast.
+
+## Engineering Constraints
+- **Testing:** We use `pytest` and `pytest-bdd` for Python. We use `Vitest` for TypeScript. NEVER generate Jest, Mocha, or `unittest` files.
+- **Linting:** We use `Ruff` and `Biome`. NEVER generate `.eslintrc`, `.prettierrc`, `tox.ini`, or `setup.cfg` files.
+- **Frameworks:** Backend is FastAPI. Frontend is Vite + React. Do not generate Next.js `pages/` or `app/` routers.

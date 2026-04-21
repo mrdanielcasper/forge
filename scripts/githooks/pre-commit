@@ -26,21 +26,20 @@ if [ -n "$STAGED_FILES" ]; then
 fi
 
 # 2. RUN LINTER / TYPE CHECKER
-# Uncomment the line below for your specific stack
 echo "🧹 Running Linters..."
-# npm run lint        # For Node/React/Next.js
-# ruff check .        # For Python
-# cargo clippy        # For Rust
+uv run ruff check . --fix          # Python linting
+uv run ruff format .               # Python formatting
+npx @biomejs/biome check --apply . # JS/TS linting and formatting
 
 if [ $? -ne 0 ]; then
     echo "❌ ERROR: Linter failed. Fix formatting/type errors before committing."
     exit 1
 fi
 
-# 3. RUN TESTS (Forces the AI to be honest)
+# 3. RUN TESTS
 echo "🧪 Running Test Suite..."
-# npm run test        # For Node/React/Next.js
-# pytest              # For Python
+uv run pytest                      # Python Unit & BDD tests
+npx vitest run --passWithNoTests   # JS/TS Unit tests
 
 if [ $? -ne 0 ]; then
     echo "❌ ERROR: Tests failed. The Engineering Agent introduced a regression."

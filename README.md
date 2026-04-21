@@ -7,13 +7,28 @@ By tying Strategy, Product Definition, Design, Engineering, and Launch Operation
 ## 🚀 First Time Setup
 
 1. **Environment Variables:** Copy `.env.example` to `.env` and add your API keys.
+2. **Backend Dependencies:** We use `uv` for lightning-fast, deterministic package management.
    ```bash
-   pip install openai anthropic python-dotenv
+   # Install uv if you don't have it
+   curl -LsSf [https://astral.sh/uv/install.sh](https://astral.sh/uv/install.sh) | sh
+   
+   # Initialize the project and lock dependencies
+   uv init
+   # Sync the locked dependencies (creates .venv automatically)
+   uv sync
    ```
-2. **Activate the Pre-Commit Bouncer:** This native Git hook prevents the AI from leaking secrets or faking test results.
+3. **Frontend Dependencies (JS/TS):** We use npm to lock in our strict linting and testing tools.
+  ```bash
+  # Install Biome, Vitest, and Playwright
+  npm install
+  ```
+4. **Activate the Pre-Commit Bouncer:** This native Git hook prevents the AI from leaking secrets or faking test results.
    ```bash
    git config core.hooksPath scripts/githooks
    ```
+  
+### Note for you (The Operator):
+When you run `uv init` and `uv add openai anthropic python-dotenv` on your machine for the first time, `uv` will create a `pyproject.toml` file and a `uv.lock` file. **You should commit both of those files to Git.** Once those files are in your repository, any future developer (or you, on a new laptop) will just run `uv sync` to perfectly replicate the environment.
 
 ## 🧠 The 6-Node Architecture
 

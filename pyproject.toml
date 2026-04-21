@@ -1,0 +1,38 @@
+[project]
+name = "solopreneur-os"
+version = "0.1.0"
+description = "Autonomous operating system for a solo founder"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "openai>=1.12.0",
+    "anthropic>=0.19.0",
+    "python-dotenv>=1.0.0",
+    "fastapi>=0.110.0",
+    "uvicorn>=0.27.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-bdd>=7.0.0",
+    "ruff>=0.3.0",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+# E: pycodestyle errors, F: pyflakes, I: isort, UP: pyupgrade, B: flake8-bugbear
+select = ["E", "F", "I", "UP", "B"] 
+ignore = []
+
+[tool.pytest.ini_options]
+addopts = "-v --strict-markers"
+testpaths = ["tests"]
+# Registering markers to prevent Pytest from throwing warnings for BDD tags
+markers = [
+    "core: core system functionality",
+    "integration: testing 3rd party APIs",
+]

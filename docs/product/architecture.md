@@ -17,3 +17,10 @@
 
 ## ADR Trigger
 Create an ADR when a change affects system boundaries, external integrations, or long-term maintenance cost.
+
+## Tooling & Execution Stack
+- **Backend Framework:** Python / FastAPI
+- **Frontend Framework:** TypeScript / Vite / React / Tailwind
+- **Python Linting & Testing:** `uv` for packages, `ruff` for lint/format, `pytest` + `pytest-bdd` for testing.
+- **JS/TS Linting & Testing:** `npm` for packages, `Biome` for lint/format, `Vitest` for unit tests, `Playwright` for E2E.
+- *Constraint:* The Engineering agent MUST use these tools. Do not install or configure ESLint, Prettier, Jest, Black, Flake8, Django, or Webpack.
