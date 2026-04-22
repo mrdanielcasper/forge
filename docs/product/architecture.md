@@ -28,3 +28,11 @@ Create an ADR when a change affects system boundaries, external integrations, or
 ## Codebase Structure
 - **Backend Sandbox:** All Python API code MUST be placed in `src/api/`.
 - **Frontend Sandbox:** All React/TS UI code MUST be placed in `src/web/`.
+
+## Infrastructure & Hosting Boundaries
+- **Sourcing Posture:** We strictly use Platform-as-a-Service (PaaS). Do NOT generate Terraform, AWS CloudFormation, or Kubernetes manifests.
+- **Frontend Hosting:** Vercel (Deployed via Git integration).
+- **Backend Hosting:** Render or Railway (Deployed via a single `Dockerfile`).
+- **Database:** Serverless Postgres (e.g., Supabase) accessed via standard connection strings.
+- **Constraint:** The Engineering agent is permitted to write `Dockerfiles` and PaaS config files (e.g., `render.yaml`), but it must NEVER hardcode production secrets.
+- **Zero-Downtime Deployments:** The FastAPI backend MUST expose a lightweight /health endpoint. The PaaS uses this to verify Docker container readiness before routing live traffic."
