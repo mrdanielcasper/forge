@@ -1,0 +1,51 @@
+#!/bin/bash
+# ==========================================================
+# Solopreneur OS: Pre-Commit Bouncer
+# ==========================================================
+# This script runs automatically when you type `git commit`.
+# If it fails, the commit is aborted.
+
+echo "🛡️  Running OS Pre-Commit Checks..."
+
+# 1. SECRET SCANNER (Prevents AI from hardcoding API keys)
+# This regex looks for common key patterns (Stripe, OpenAI, Anthropic, AWS)
+echo "🔎 Scanning for leaked secrets..."
+FORBIDDEN_PATTERNS="(sk-[a-zA-Z0-9]{20,}|sk_live_[a-zA-Z0-9]+|AKIA[0-9A-Z]{16})"
+
+# Check only the files being staged for commit
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM)
+
+if [ -n "$STAGED_FILES" ]; then
+    for FILE in $STAGED_FILES; do
+        if grep -qE "$FORBIDDEN_PATTERNS" "$FILE"; then
+            echo "❌ ERROR: Potential API key or secret found in: $FILE"
+            echo "Please move the secret to your .env file and use environment variables."
+            exit 1
+        fi
+    done
+fi
+
+# 2. RUN LINTER / TYPE CHECKER
+# Uncomment the line below for your specific stack
+echo "🧹 Running Linters..."
+# npm run lint        # For Node/React/Next.js
+# ruff check .        # For Python
+# cargo clippy        # For Rust
+
+if [ $? -ne 0 ]; then
+    echo "❌ ERROR: Linter failed. Fix formatting/type errors before committing."
+    exit 1
+fi
+
+# 3. RUN TESTS (Forces the AI to be honest)
+echo "🧪 Running Test Suite..."
+# npm run test        # For Node/React/Next.js
+# pytest              # For Python
+
+if [ $? -ne 0 ]; then
+    echo "❌ ERROR: Tests failed. The Engineering Agent introduced a regression."
+    exit 1
+fi
+
+echo "✅ All checks passed. Committing safely."
+exit 0
