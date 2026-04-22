@@ -24,3 +24,7 @@ Create an ADR when a change affects system boundaries, external integrations, or
 - **Python Linting & Testing:** `uv` for packages, `ruff` for lint/format, `pytest` + `pytest-bdd` for testing.
 - **JS/TS Linting & Testing:** `npm` for packages, `Biome` for lint/format, `Vitest` for unit tests, `Playwright` for E2E.
 - *Constraint:* The Engineering agent MUST use these tools. Do not install or configure ESLint, Prettier, Jest, Black, Flake8, Django, or Webpack.
+
+## Codebase Structure
+- **Backend Sandbox:** All Python API code MUST be placed in `src/api/`.
+- **Frontend Sandbox:** All React/TS UI code MUST be placed in `src/web/`.

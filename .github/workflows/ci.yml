@@ -1,0 +1,46 @@
+name: OS Build & Test
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv (Backend)
+        uses: astral-sh/setup-uv@v2
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: "pyproject.toml"
+
+      - name: Install Backend Dependencies
+        run: uv sync
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Frontend Dependencies
+        run: npm ci
+
+      - name: Run Linters (Ruff & Biome)
+        run: |
+          uv run ruff check .
+          npx @biomejs/biome check .
+
+      - name: Run Backend Tests (Pytest)
+        run: uv run pytest
+
+      - name: Run Frontend Tests (Vitest)
+        run: npm run test

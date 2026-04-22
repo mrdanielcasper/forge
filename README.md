@@ -10,7 +10,7 @@ By tying Strategy, Product Definition, Design, Engineering, and Launch Operation
 2. **Backend Dependencies:** We use `uv` for lightning-fast, deterministic package management.
    ```bash
    # Install uv if you don't have it
-   curl -LsSf [https://astral.sh/uv/install.sh](https://astral.sh/uv/install.sh) | sh
+   curl -LsSf https://astral.sh/uv/install.sh | sh
    
    # Initialize the project and lock dependencies
    uv init
@@ -52,28 +52,21 @@ You are the CEO, the lead investor, and the final decision-maker. You **do not**
 ## 📁 Repository Structure & Canonical Documents
 
 ```text
-docs/
-  company/
-    thesis.md           # The business mission and strategic wedge
-    scorecard.md        # The metrics that justify building
-    feedback_log.md     # Raw evidence from users
-    lessons_learned.md  # The global system memory (AI constraints)
-  product/
-    backlog.md          # Prioritized opportunities (Pain + Sourcing)
-    current_run.md      # The single active delivery record
-    architecture.md     # LIVE architecture (Updated ONLY by Engineering)
-    flows.md            # Mermaid UI state diagrams
-    adr/                # Architectural Decision Records
-    briefs/             # Live feature specs
-    contracts/          # Live API/Data schemas
-  ops/
-    launch_checklist.md # Launch readiness & infra Kill Switches
-    experiment_log.md   # Outcome tracking
-skills/                 # The LLM prompt definitions
+src/
+  api/                # Backend Sandbox (FastAPI / Python)
+  web/                # Frontend Sandbox (React / Vite / TS)
+tests/
+  api/                # Pytest & BDD Feature files
+  web/                # Vitest & Playwright E2E files
+docs/                 # Global OS memory, ADRs, Contracts, and Strategy
+skills/               # The LLM prompt definitions
 scripts/
   githooks/
-    pre-commit          # The zero-dependency security/testing bouncer
-orchestrator.py         # The deterministic execution engine
+    pre-commit        # The automated bouncer
+orchestrator.py       # The execution engine
+pyproject.toml        # Backend dependencies & Ruff config
+package.json          # Frontend dependencies & scripts
+biome.json            # JS/TS Linting config
 ```
 
 ## 🛠️ How To Use It

@@ -30,8 +30,8 @@ ignore = []
 
 [tool.pytest.ini_options]
 addopts = "-v --strict-markers"
-testpaths = ["tests"]
-# Registering markers to prevent Pytest from throwing warnings for BDD tags
+# THIS IS THE FIX: Only look for Python tests in the API test folder
+testpaths = ["tests/api"] 
 markers = [
     "core: core system functionality",
     "integration: testing 3rd party APIs",
