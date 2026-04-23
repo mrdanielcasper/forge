@@ -1,137 +1,99 @@
 # Solo Software Company OS
 
-This repository is a lightweight operating system for building a one-person software company. It is designed to keep strategy, product definition, design, engineering, and launch work tied to durable artifacts instead of ad hoc chat history.
+This repository is a lightweight, fully autonomous operating system for building and scaling a one-person software company. It replaces ad-hoc chat interfaces with a strict, deterministic agent pipeline designed to protect a solo founder's most precious resources: **Time, Focus, IP, and Capital.**
 
-## First Time Setup
-1. Copy `.env.example` to `.env` and add your API keys.
-2. Run `git config core.hooksPath scripts/githooks` to activate the AI safety nets.
+By tying Strategy, Product Definition, Design, Engineering, and Launch Operations to durable markdown artifacts, this OS prevents architectural bloat, ensures legal/compliance safety, and maintains a "Zero-Debt" codebase.
 
-## What This Repo Is For
-- Turning raw customer pain into testable opportunities.
-- Converting validated opportunities into scoped product briefs and contracts.
-- Keeping active delivery work tied to a single current run.
-- Closing the loop from launch back into measurement and feedback.
+## 🚀 First Time Setup
 
-## Operating Model
-The repo is organized around a simple flow:
+1. **Environment Variables:** Copy `.env.example` to `.env` and add your API keys.
+   ```bash
+   pip install openai anthropic python-dotenv
+   ```
+2. **Activate the Pre-Commit Bouncer:** This native Git hook prevents the AI from leaking secrets or faking test results.
+   ```bash
+   git config core.hooksPath scripts/githooks
+   ```
 
-1. Strategy identifies a painful job worth solving.
-2. Product Spec turns that opportunity into a feature brief and contract.
-3. Design defines the user flow and state handling.
-4. Engineering implements from the brief and contract.
-5. Growth/Ops handles launch, measurement, and learning.
+## 🧠 The 6-Node Architecture
 
-The skills in the `skills/` folder exist to reinforce this sequence. They are useful only if the documents they depend on are real and current.
+The OS is driven by a deterministic Python script (`orchestrator.py`) that acts as your Chief of Staff, routing tasks to 5 specialized LLM agents defined in the `skills/` folder.
 
-## Repository Structure
+1. **The Orchestrator (`orchestrator.py`):** A deterministic Python router. It parses routing tags, aggressively prunes context to save tokens, manages the multi-agent execution queue, and dynamically routes tasks to the most cost-effective LLM provider (`SMART_ROUTING`).
+2. **Strategy (`strategy.xml`):** The business filter. Evaluates ideas based on Cost of Delay, Reversibility (1-Way vs 2-Way doors), Legal/Compliance risk, and Strategic Sourcing (Build vs. Buy vs. OSS). 
+3. **Product Spec (`product_spec.xml`):** The architect's radar. Turns strategy into strict Feature Briefs and Data Contracts. Identifies when an idea crosses a system boundary and triggers an Architectural Decision Record (ADR).
+4. **Design (`design.xml`):** The visual mapper. Generates Mermaid.js state flows and defines WCAG-compliant, atomic UI components using utility-first CSS.
+5. **Engineering (`engineering.xml`):** The builder & janitor. Drafts ADRs for your approval, writes Interfaces/Mocks first, executes TDD (Red-Green-Harden), runs linters, and ruthlessly deletes dead code during Teardowns. 
+6. **Growth/Ops (`growth_ops.xml`):** The privacy officer and analyst. Enforces compliance, defines infrastructure "Kill Switches" (e.g., alert thresholds), evaluates strict A/B or Pre/Post cohorts, and commands Teardowns.
+
+## 👤 The Operator's Role (Human-in-the-Loop)
+
+You are the CEO, the lead investor, and the final decision-maker. You **do not** write code or draft specs. Your job is to:
+1. **Provide raw signals:** Feed user pain points into the prompt.
+2. **Approve Architecture:** When the pipeline pauses with `ADR_STATE: [Pending Human]`, you read the drafted ADR in `docs/product/adr/` and change its status to "Accepted".
+3. **Provide Raw Data:** When Growth/Ops asks for launch metrics, you paste the raw numbers from your dashboard (Datadog, PostHog, etc.).
+4. **Curate the Memory:** Update `docs/company/lessons_learned.md` when an agent makes a mistake, ensuring it never happens twice.
+
+## 📁 Repository Structure & Canonical Documents
+
 ```text
 docs/
   company/
-    thesis.md
-    personas.md
-    scorecard.md
-    feedback_log.md
+    thesis.md           # The business mission and strategic wedge
+    scorecard.md        # The metrics that justify building
+    feedback_log.md     # Raw evidence from users
+    lessons_learned.md  # The global system memory (AI constraints)
   product/
-    backlog.md
-    current_run.md
-    architecture.md
-    briefs/
-    contracts/
-    adr/g
+    backlog.md          # Prioritized opportunities (Pain + Sourcing)
+    current_run.md      # The single active delivery record
+    architecture.md     # LIVE architecture (Updated ONLY by Engineering)
+    flows.md            # Mermaid UI state diagrams
+    adr/                # Architectural Decision Records
+    briefs/             # Live feature specs
+    contracts/          # Live API/Data schemas
   ops/
-    launch_checklist.md
-    experiment_log.md
-  templates/
-    feature_brief.md
-    contract.md
-    adr.md
-
-skills/
-  orchestrator.xml
-  strategy.xml
-  product_spec.xml
-  design.xml
-  engineering.xml
-  growth_ops.xml
+    launch_checklist.md # Launch readiness & infra Kill Switches
+    experiment_log.md   # Outcome tracking
+skills/                 # The LLM prompt definitions
+scripts/
+  githooks/
+    pre-commit          # The zero-dependency security/testing bouncer
+orchestrator.py         # The deterministic execution engine
 ```
 
-## Canonical Documents
-- `docs/company/thesis.md`: the business thesis and strategic wedge.
-- `docs/company/personas.md`: who the product is for and who it is not for.
-- `docs/company/scorecard.md`: the metrics that justify building.
-- `docs/company/feedback_log.md`: raw evidence from users and operations.
-- `docs/product/backlog.md`: prioritized opportunities with evidence and target metrics.
-- `docs/product/current_run.md`: the single active delivery record.
-- `docs/product/briefs/`: live feature briefs.
-- `docs/product/contracts/`: live contracts for feature behavior and interfaces.
-- `docs/ops/launch_checklist.md`: launch readiness and review criteria.
-- `docs/ops/experiment_log.md`: outcome tracking and decisions.
+## 🛠️ How To Use It
 
-## How To Use It
-### When you have a new idea
-- Start with `docs/company/feedback_log.md` if it comes from a user signal.
-- Use `skills/strategy.xml` to test whether the idea maps to a painful job and a metric.
-- Add or refine the item in `docs/product/backlog.md` only when there is evidence.
+You interface with the entire company through a single command: `python orchestrator.py "Your prompt here"`.
 
-### When an idea is ready to define
-- Use `skills/product_spec.xml`.
-- Create a live brief under `docs/product/briefs/` from `docs/templates/feature_brief.md`.
-- Create a live contract under `docs/product/contracts/` if the work crosses a UI or service boundary.
-- Move the work into `docs/product/current_run.md` only after the brief exists.
+### The Standard Workflow
+When a user requests a new feature (e.g., "I wish I could export my data"):
+```bash
+python orchestrator.py "3 users asked for data exports in the feedback log."
+```
+*The Orchestrator wakes up Strategy -> Spec -> Engineering (ADR Draft) -> [PAUSE FOR YOUR APPROVAL] -> Engineering (Build) -> Ops.*
 
-### When work is ready to build
-- Use `skills/design.xml` for flow and state handling.
-- Use `skills/engineering.xml` for acceptance scenarios, tests, implementation, and delivery updates.
-- Keep `docs/product/current_run.md` current as the source of truth.
+### Fast-Track: The Hotfix
+When a test fails, or you need to fix a typo, bypass Strategy and Spec and go straight to code:
+```bash
+python orchestrator.py "[HOTFIX] The button on the landing page is blue, make it red."
+```
 
-### When work is ready to ship
-- Use `skills/growth_ops.xml`.
-- Update `docs/ops/launch_checklist.md` with the target message, metric, and review date.
-- Record what happened in `docs/ops/experiment_log.md` and feed user reactions back into `docs/company/feedback_log.md`.
+### Fast-Track: The Teardown
+When an experiment fails, order the Engineering agent to aggressively scrub the codebase of the dead feature:
+```bash
+python orchestrator.py "[TEARDOWN] The A/B test lost. Delete the variant B webhook settings code and UI."
+```
 
-## Current Focus
-The active example in this repo is Discord Integration:
-- Backlog item: `B-001`
-- Brief: `docs/product/briefs/discord_integration.md`
-- Contract: `docs/product/contracts/discord_webhook.md`
-- Current run: `docs/product/current_run.md`
+## ⚖️ Do's and Don'ts
 
-This is intentionally a mocked-first workflow. The goal is to validate setup value and user understanding before investing in a fuller production integration.
+* **DO use `lessons_learned.md`:** If an agent hallucinates a Tailwind class or uses an outdated library, add a bullet point here. The Orchestrator injects this into every prompt.
+* **DO let the pre-commit hook work:** If `git commit` fails because the AI broke a test, copy the error, use the `[HOTFIX]` command, and force the Engineering agent to fix its own mess.
+* **DON'T bypass the ADR process:** Never let agents arbitrarily decide to add Postgres or Redis. Let them draft the ADR, but *you* must approve it.
+* **DON'T let agents write to `architecture.md`:** Only the Engineering agent is allowed to update this file, and only *after* an ADR is accepted.
+* **DON'T bloat the backlog:** Strategy will actively try to kill bad ideas. Let it.
 
-## Rules That Matter
-- Do not build from raw ideas when a brief or contract is missing.
-- Do not treat the backlog as a dumping ground; every item needs pain, evidence, and a metric.
-- Do not let active work live anywhere except `docs/product/current_run.md`.
-- Do not launch without a measurement plan and review date.
+## 💡 Helpful Tips
 
-## Recommended Working Rhythm
-1. Capture signals in feedback.
-2. Turn repeated pains into experiments.
-3. Turn validated experiments into feature briefs.
-4. Build only from current-run artifacts.
-5. Review metrics and write down what changed.
-
-## Founder Workflow
-### Weekly Review
-- Read `docs/company/feedback_log.md` and pull out repeated pains.
-- Review `docs/company/scorecard.md` against the last week's actual signals.
-- Decide whether the current wedge still deserves the next week of effort.
-- Clean up `docs/product/backlog.md` so only evidence-backed work stays near the top.
-
-### Starting New Work
-- If the idea is not tied to a real pain, do not spec it.
-- If the pain is real but the solution is unclear, run Strategy and log an experiment.
-- If the opportunity is validated enough to define behavior, create a brief and contract before moving it into the current run.
-
-### During Active Delivery
-- Keep `docs/product/current_run.md` current.
-- Treat briefs, contracts, and design handoffs as the source of truth for behavior.
-- Avoid broadening scope mid-run unless the new requirement changes the core job to be done.
-
-### After Shipping
-- Update `docs/ops/launch_checklist.md` with what actually launched.
-- Record the outcome in `docs/ops/experiment_log.md`.
-- Add real user feedback back into `docs/company/feedback_log.md`.
-- Decide explicitly whether to expand, iterate, or kill the feature.
-
-If this repo starts feeling heavy, cut process rather than adding more. The point is to preserve clarity, not simulate a larger company.
+* **Smart Routing:** Keep `SMART_ROUTING=true` in your `.env`. The Orchestrator will automatically route logic-heavy tasks (Strategy) to deep-reasoning models (o3-mini), coding tasks to Claude 3.7 Sonnet, and formatting tasks to cheap models (GPT-4o-mini).
+* **Context Pruning:** Don't worry about your feedback logs getting too long. The Orchestrator uses deterministic pruning (`tail_file`) to only send the most recent signals to the AI, saving you massive API costs.
+* **Reversibility is Key:** The Strategy agent grades ideas as "1-Way Doors" or "2-Way Doors". Trust this system. Move incredibly fast on 2-Way Doors (UI tweaks), but pause and demand heavy validation on 1-Way Doors (Schema changes, pricing shifts).

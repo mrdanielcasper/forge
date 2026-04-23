@@ -22,20 +22,18 @@ SMART_ROUTING = os.environ.get("SMART_ROUTING", "true").lower() == "true"
 DEFAULT_PROVIDER = os.environ.get("DEFAULT_PROVIDER", "openai").lower()
 
 # --- SMART MODEL MAPPING ---
-# If SMART_ROUTING is True, the system uses this map to optimize cost/performance
 MODEL_MAP = {
-    "Strategy": {"provider": "openai", "model": "o3-mini"}, # Deep reasoning for business
-    "Product Spec": {"provider": "openai", "model": "gpt-4o-mini"}, # Fast, cheap logic
-    "Design": {"provider": "anthropic", "model": "claude-3-7-sonnet-20250219"}, # Best at UI/UX
-    "Engineering": {"provider": "anthropic", "model": "claude-3-7-sonnet-20250219"}, # Best at Code
-    "Growth Ops": {"provider": "openai", "model": "gpt-4o-mini"}, # Formatting & checklist evaluation
+    "Strategy": {"provider": "openai", "model": "o3-mini"}, 
+    "Product Spec": {"provider": "openai", "model": "gpt-4o-mini"}, 
+    "Design": {"provider": "anthropic", "model": "claude-3-7-sonnet-20250219"}, 
+    "Engineering": {"provider": "anthropic", "model": "claude-3-7-sonnet-20250219"}, 
+    "Growth Ops": {"provider": "openai", "model": "gpt-4o-mini"}, 
 }
 
 # --- LLM ABSTRACTION LAYER ---
 class LLMClient:
     def __init__(self):
         self.clients = {}
-        # Lazily load clients to avoid crashing if a key is missing but unused
         if os.environ.get("OPENAI_API_KEY"):
             try:
                 from openai import OpenAI
@@ -53,7 +51,6 @@ class LLMClient:
                 sys.exit(1)
 
     def call(self, agent_name, system_prompt, user_prompt):
-        # Determine routing logic
         if SMART_ROUTING and agent_name in MODEL_MAP:
             provider = MODEL_MAP[agent_name]["provider"]
             model = MODEL_MAP[agent_name]["model"]
@@ -96,7 +93,6 @@ llm = LLMClient()
 
 # --- DETERMINISTIC CONTEXT PRUNING ---
 def read_file(filepath):
-    """Standard read."""
     try:
         with open(filepath, 'r') as f:
             return f.read()
@@ -104,7 +100,6 @@ def read_file(filepath):
         return f"[SYSTEM NOTE: The file {filepath} was not found.]"
 
 def tail_file(filepath, lines=50):
-    """Context Pruning: Returns only the bottom N lines of a growing log file."""
     try:
         with open(filepath, 'r') as f:
             content = f.readlines()
@@ -115,7 +110,6 @@ def tail_file(filepath, lines=50):
         return f"[SYSTEM NOTE: {filepath} not found.]"
 
 def extract_section(filepath, section_header):
-    """Context Pruning: Extracts ONLY a specific ## Heading from a markdown file."""
     content = read_file(filepath)
     pattern = rf"(?i)(##\s*{section_header}.*?)(?=\n## |\Z)"
     match = re.search(pattern, content, re.DOTALL)
@@ -124,7 +118,6 @@ def extract_section(filepath, section_header):
     return f"[SYSTEM NOTE: Section '{section_header}' not found in {filepath}]"
 
 def assemble_context(agent_name):
-    """Builds token-efficient context using pruning techniques."""
     context = f"\n\n--- SYSTEM MEMORY ---\n{read_file(f'{DOCS_DIR}/company/lessons_learned.md')}\n"
     
     if "Strategy" in agent_name:
@@ -135,6 +128,7 @@ def assemble_context(agent_name):
     elif "Spec" in agent_name:
         context += extract_section(f"{DOCS_DIR}/product/backlog.md", "High Priority") 
         context += read_file(f"{DOCS_DIR}/product/current_run.md")
+        context += read_file(f"{DOCS_DIR}/product/architecture.md") # Added Architecture awareness
     
     elif "Design" in agent_name:
         context += read_file(f"{DOCS_DIR}/product/current_run.md")
@@ -142,6 +136,9 @@ def assemble_context(agent_name):
     
     elif "Engineering" in agent_name:
         context += read_file(f"{DOCS_DIR}/product/current_run.md")
+        context += read_file(f"{DOCS_DIR}/product/architecture.md") # Added Architecture awareness
+        context += read_file(f"{DOCS_DIR}/product/adr/README.md") # Added ADR awareness
+        context += read_file(f"{DOCS_DIR}/product/flows.md") # Added for Artifact Triangulation
     
     elif "Ops" in agent_name:
         context += read_file(f"{DOCS_DIR}/product/current_run.md")
@@ -152,7 +149,14 @@ def assemble_context(agent_name):
 
 # --- PARSING & ROUTING LOGIC ---
 def check_human_pause(response_text):
-    pauses = [r"REVERSIBILITY:\s*\[1-Way\]", r"DATA:\s*\[Pending", r"CIRCUIT_BREAKER", r"TEARDOWN:\s*\[Needed\]"]
+    # Added ADR_STATE to the pause triggers
+    pauses = [
+        r"REVERSIBILITY:\s*\[1-Way\]", 
+        r"DATA:\s*\[Pending", 
+        r"CIRCUIT_BREAKER", 
+        r"TEARDOWN:\s*\[Needed\]",
+        r"ADR_STATE:\s*\[Pending Human\]"
+    ]
     return any(re.search(p, response_text, re.IGNORECASE) for p in pauses)
 
 def extract_routing_queue(response_text):
@@ -170,10 +174,15 @@ def run_os(user_input):
     
     agent_queue = []
     
+    # Check for Fast-Tracks (HOTFIX or TEARDOWN)
     if "[HOTFIX]" in user_input:
         print("🚨 HOTFIX DETECTED. Bypassing Strategy and Spec.")
         agent_queue.append("Engineering")
         current_prompt = user_input.replace("[HOTFIX]", "").strip()
+    elif "[TEARDOWN]" in user_input:
+        print("🗑️ TEARDOWN DETECTED. Bypassing Strategy and Spec.")
+        agent_queue.append("Engineering")
+        current_prompt = user_input.replace("[TEARDOWN]", "").strip() + "\n\nCRITICAL: Execute the Teardown mandate."
     else:
         agent_queue.append("Strategy")
         current_prompt = user_input
@@ -203,7 +212,8 @@ def run_os(user_input):
         print(f"\n[{current_agent} Output]:\n{response}\n")
         
         if check_human_pause(response):
-            print("🛑 HUMAN IN THE LOOP TRIGGERED. Pipeline paused. Update your files and run OS again.")
+            print("🛑 HUMAN IN THE LOOP TRIGGERED. Pipeline paused.")
+            print("Action Required: Review the output (e.g. approve the ADR or execute Teardown), update files manually, and run OS again.")
             sys.exit(0)
             
         new_queue = extract_routing_queue(response)
