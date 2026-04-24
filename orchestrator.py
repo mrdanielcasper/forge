@@ -287,7 +287,14 @@ def write_file(filepath, content):
 def run_shell_command(command):
     """Executes an isolated shell command and returns stdout/stderr."""
     # Strict whitelist of allowed automated commands
-    allowed_prefixes = ["uv run pytest", "npm run", "npx playwright", "npx @biomejs/biome"]
+    allowed_prefixes = [
+        "uv run pytest",
+        "npm run",
+        "npx playwright",
+        "npx @biomejs/biome",
+        "mv ",
+        "move ",
+    ]
 
     if not any(command.startswith(prefix) for prefix in allowed_prefixes):
         print(f"🛑 SECURITY BLOCK: AI attempted unauthorized command: {command}")
