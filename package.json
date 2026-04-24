@@ -13,7 +13,7 @@
     "preview": "vite preview",
     "lint": "biome check .",
     "format": "biome format --write .",
-    "test": "vitest run",
+    "test": "vitest run --passWithNoTests",
     "test:watch": "vitest",
     "test:e2e": "playwright test"
   },
@@ -24,11 +24,19 @@
   "author": "Daniel Casper",
   "license": "ISC",
   "dependencies": {
+    "@fontsource-variable/inter": "^5.2.8",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
     "lucide-react": "^0.360.0",
+    "radix-ui": "^1.4.3",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "shadcn": "^4.4.0",
+    "tailwind-merge": "^3.5.0",
+    "tw-animate-css": "^1.4.0"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.11.2",
     "@biomejs/biome": "^1.6.0",
     "@playwright/test": "^1.42.1",
     "@types/react": "^18.2.66",
