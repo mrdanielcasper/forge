@@ -2,13 +2,13 @@ version: 2
 updates:
   # Maintain Python dependencies
   - package-ecosystem: "pip"
-    directory: "/src/api" # Adjust to where your pyproject.toml is
+    directory: "/" 
     schedule:
       interval: "weekly"
 
   # Maintain JS/TS dependencies
   - package-ecosystem: "npm"
-    directory: "/src/web" # Adjust to where your package.json is
+    directory: "/" 
     schedule:
       interval: "weekly"
 

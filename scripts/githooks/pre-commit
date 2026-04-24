@@ -8,7 +8,6 @@
 echo "🛡️  Running OS Pre-Commit Checks..."
 
 # 1. SECRET SCANNER (Prevents AI from hardcoding API keys)
-# This regex looks for common key patterns (Stripe, OpenAI, Anthropic, AWS)
 echo "🔎 Scanning for leaked secrets..."
 FORBIDDEN_PATTERNS="(sk-[a-zA-Z0-9]{20,}|sk_live_[a-zA-Z0-9]+|AKIA[0-9A-Z]{16})"
 
@@ -19,7 +18,7 @@ if [ -n "$STAGED_FILES" ]; then
     for FILE in $STAGED_FILES; do
         if grep -qE "$FORBIDDEN_PATTERNS" "$FILE"; then
             echo "❌ ERROR: Potential API key or secret found in: $FILE"
-            echo "Please move the secret to your .env file and use environment variables."
+            echo "💡 FIX: Please move the secret to your .env file and use environment variables."
             exit 1
         fi
     done
@@ -27,24 +26,20 @@ fi
 
 # 2. RUN LINTER / TYPE CHECKER
 echo "🧹 Running Linters..."
-uv run ruff check . --fix          # Python linting
-uv run ruff format .               # Python formatting
-npx @biomejs/biome check --apply . # JS/TS linting and formatting
+# Fail fast with descriptive errors if ANY linter exits with a non-zero code
+uv run ruff check . --fix || { echo "❌ ERROR: Ruff linting failed. Fix formatting/type errors before committing."; exit 1; }
+uv run ruff format . || { echo "❌ ERROR: Ruff formatting failed."; exit 1; }
+npx @biomejs/biome check --write . || { echo "❌ ERROR: Biome linting/formatting failed."; exit 1; }
 
-if [ $? -ne 0 ]; then
-    echo "❌ ERROR: Linter failed. Fix formatting/type errors before committing."
-    exit 1
+# Re-stage ONLY the files that were originally staged, in case the linters auto-fixed them!
+if [ -n "$STAGED_FILES" ]; then
+    git add $STAGED_FILES
 fi
 
 # 3. RUN TESTS
 echo "🧪 Running Test Suite..."
-uv run pytest                      # Python Unit & BDD tests
-npx vitest run --passWithNoTests   # JS/TS Unit tests
-
-if [ $? -ne 0 ]; then
-    echo "❌ ERROR: Tests failed. The Engineering Agent introduced a regression."
-    exit 1
-fi
+uv run pytest || { echo "❌ ERROR: Python tests failed. The Engineering Agent introduced a regression."; exit 1; }
+npx vitest run --passWithNoTests || { echo "❌ ERROR: JS/TS tests failed. The Engineering Agent introduced a regression."; exit 1; }
 
 echo "✅ All checks passed. Committing safely."
 exit 0

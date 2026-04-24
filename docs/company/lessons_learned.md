@@ -16,9 +16,14 @@
 - **No Console Logging:** Never use `console.log()` to suppress or swallow errors in production. Pipe errors to the UI or use structured backend logging. 
 - **Database Mocks:** Never write tests that require a live Postgres connection. Always use MSW (Mock Service Worker) for APIs and in-memory arrays for DB tests.
 - **Date Handling:** Never use the native `Date()` object for timezone-sensitive calculations. Always use `date-fns`.
-- **Environment Variables (Mocks):** Never name the test webhook URL anything other than `TEST_WEBHOOK_URL` in the `.env.mock` file. 
+- **Environment Variables (Mocks):** When testing external services, never hardcode URLs in test files. Always use explicit mock variables (e.g., `MOCK_EXTERNAL_API_URL`) inside `.env.mock` files.
 - **Environment Variables (Production):** Never use `os.environ.get()` for runtime application logic. Always define a Pydantic `BaseSettings` class. This ensures the Docker container fails to boot if a production secret is missing, protecting zero-downtime deployments.
 - **Containerization:** When writing Dockerfiles for the FastAPI backend, always use a multi-stage build. Use `uv` to install dependencies in the builder stage to keep the final production image minimal. Never run the app as the `root` user.
+- **Cross-Platform File I/O:** Always explicitly define `encoding="utf-8"` when using Python's `open()` function to prevent Unicode crashes on Windows environments.
+- **Git Hooks & Auto-Fixers:** When utilizing auto-fixers (like Ruff or Biome) inside bash scripts or pre-commit hooks, always ensure the script runs `git add -u` to stage the modified files before completing the hook.
+
+## AI & Orchestration
+- **LLM Fallbacks:** Always implement fallback or terminal states when parsing LLM outputs. If an LLM fails to return required tags (like a routing directive), the system must halt or default to human-in-the-loop to prevent infinite execution loops.
 
 ## Strategy & Ops
 - **Test Types:** Never recommend an A/B test unless the feature targets the public landing page. Deep-app features lack the traffic for statistical significance; always use Pre/Post Cohorts.
@@ -36,7 +41,7 @@
 
 ## Version Control
 - **Branching Strategy:** We use a strict Short-Lived Feature Branch model. Do not recommend GitFlow, Release branches, or Staging environments. Every branch branches from `main` and merges back to `main`.
-- **Commit Messages:** All commits must follow the Conventional Commits specification (`feat:`, `fix:`, `refactor:`, `docs:`, `chore:`). Always append the Backlog ID from `current_run.md` to the end of the commit message (e.g., `[B-001]`).
+- **Commit Messages:** All commits must follow the Conventional Commits specification (`feat:`, `fix:`, `refactor:`, `docs:`, `chore:`). Always append the associated Backlog ID to the end of the commit message (e.g., `feat: build webhooks [TASK-123]`).
 - **Merging Strategy (Squash & Merge):** All Pull Requests MUST be merged using "Squash and Merge" to keep the `main` branch history clean. One feature branch equals exactly one commit on `main`. Always delete the feature branch immediately after merging.
 
 ## Security Baselines (OWASP Top 10 Prevention)

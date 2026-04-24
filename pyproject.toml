@@ -34,7 +34,7 @@ ignore = []
 
 [tool.pytest.ini_options]
 addopts = "-v --strict-markers"
-# THIS IS THE FIX: Only look for Python tests in the API test folder
+pythonpath = "."
 testpaths = ["tests/api"] 
 markers = [
     "core: core system functionality",
