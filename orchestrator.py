@@ -23,7 +23,7 @@ MAX_CHAIN_STEPS = 10
 SMART_ROUTING = os.environ.get("SMART_ROUTING", "true").lower() == "true"
 DEFAULT_PROVIDER = os.environ.get("DEFAULT_PROVIDER", "openai").lower()
 
-# --- SMART MODEL MAPPING (Updated per Claude's feedback) ---
+# --- SMART MODEL MAPPING ---
 MODEL_MAP = {
     "Strategy": {"provider": "openai", "model": "o4-mini"},
     "Product Spec": {"provider": "openai", "model": "gpt-4o-mini"},
@@ -33,6 +33,28 @@ MODEL_MAP = {
 }
 
 
+# --- TELEMETRY LOGGER ---
+def log_token_usage(agent, provider, model, p_tokens, c_tokens, elapsed):
+    """Appends token usage and latency telemetry to a local CSV artifact."""
+    log_path = os.path.join(DOCS_DIR, "ops", "token_tracker.csv")
+    file_exists = os.path.exists(log_path)
+
+    try:
+        # Ensure the ops directory exists
+        os.makedirs(os.path.dirname(log_path), exist_ok=True)
+        with open(log_path, "a", encoding="utf-8") as f:
+            if not file_exists:
+                f.write(
+                    "timestamp,agent,provider,model,prompt_tokens,completion_tokens,latency_s\n"
+                )
+
+            timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
+            f.write(f"{timestamp},{agent},{provider},{model},{p_tokens},{c_tokens},{elapsed:.2f}\n")
+    except Exception as e:
+        print(f"⚠️ Could not write telemetry log: {e}")
+
+
+# --- API CLIENT ---
 class LLMClient:
     def __init__(self):
         self.clients = {}
@@ -56,53 +78,61 @@ class LLMClient:
                 print("❌ ERROR: anthropic package not found.")
                 sys.exit(1)
 
+    def call(self, agent_name, system_prompt, user_prompt):
+        if SMART_ROUTING and agent_name in MODEL_MAP:
+            provider = MODEL_MAP[agent_name]["provider"]
+            model = MODEL_MAP[agent_name]["model"]
+        else:
+            provider = DEFAULT_PROVIDER
+            model = "gpt-4o" if provider == "openai" else "claude-sonnet-4-5"
 
-def call(self, agent_name, system_prompt, user_prompt):
-    if SMART_ROUTING and agent_name in MODEL_MAP:
-        provider = MODEL_MAP[agent_name]["provider"]
-        model = MODEL_MAP[agent_name]["model"]
-    else:
-        provider = DEFAULT_PROVIDER
-        model = "gpt-4o" if provider == "openai" else "claude-sonnet-4-5"
+        if provider not in self.clients:
+            print(f"❌ ERROR: API key for {provider} not found. Cannot route {agent_name}.")
+            sys.exit(1)
 
-    if provider not in self.clients:
-        print(f"❌ ERROR: API key for {provider} not found. Cannot route {agent_name}.")
-        sys.exit(1)
+        max_retries = 3
+        for attempt in range(max_retries):
+            try:
+                start_time = time.time()
 
-    # --- HARDENED RETRY LOGIC ---
-    max_retries = 3
-    for attempt in range(max_retries):
-        try:
-            if provider == "openai":
-                response = self.clients["openai"].chat.completions.create(
-                    model=model,
-                    messages=[
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": user_prompt},
-                    ],
-                )
-                return response.choices[0].message.content
+                if provider == "openai":
+                    response = self.clients["openai"].chat.completions.create(
+                        model=model,
+                        messages=[
+                            {"role": "system", "content": system_prompt},
+                            {"role": "user", "content": user_prompt},
+                        ],
+                    )
+                    text = response.choices[0].message.content
+                    p_tokens = response.usage.prompt_tokens
+                    c_tokens = response.usage.completion_tokens
 
-            elif provider == "anthropic":
-                response = self.clients["anthropic"].messages.create(
-                    model=model,
-                    max_tokens=4096,
-                    temperature=0.2,
-                    system=system_prompt,
-                    messages=[{"role": "user", "content": user_prompt}],
-                )
-                return response.content[0].text
+                elif provider == "anthropic":
+                    response = self.clients["anthropic"].messages.create(
+                        model=model,
+                        max_tokens=4096,
+                        temperature=0.2,
+                        system=system_prompt,
+                        messages=[{"role": "user", "content": user_prompt}],
+                    )
+                    text = response.content[0].text
+                    p_tokens = response.usage.input_tokens
+                    c_tokens = response.usage.output_tokens
 
-        except Exception as e:
-            if attempt == max_retries - 1:
-                print(f"\n❌ API ERROR({provider}-{model}) after {max_retries} attempts: {e}")
-                sys.exit(1)
+                elapsed = time.time() - start_time
+                log_token_usage(agent_name, provider, model, p_tokens, c_tokens, elapsed)
 
-            # Exponential backoff: sleep for 2s, then 4s, then crash.
-            sleep_time = 2 ** (attempt + 1)
-            print(f"\n⚠️ API Interruption ({provider}): {e}")
-            print(f"🔄 Retrying in {sleep_time} seconds (Attempt {attempt + 1}/{max_retries}).")
-            time.sleep(sleep_time)
+                return text
+
+            except Exception as e:
+                if attempt == max_retries - 1:
+                    print(f"\n❌ API ERROR({provider}-{model}) after {max_retries} attempts: {e}")
+                    sys.exit(1)
+
+                sleep_time = 2 ** (attempt + 1)
+                print(f"\n⚠️ API Interruption ({provider}): {e}")
+                print(f"🔄 Retrying in {sleep_time} seconds (Attempt {attempt + 1}/{max_retries}).")
+                time.sleep(sleep_time)
 
 
 # --- DETERMINISTIC CONTEXT PRUNING ---
@@ -279,20 +309,16 @@ def run_os(user_input, flags=None):
             print(f"🔎 [VERBOSE]: Sending {len(payload)} chars of context to {current_agent}...")
             print(f"--- PAYLOAD START ---\n{payload}\n--- PAYLOAD END ---")
 
-        start_time = time.time()
-
         response = llm.call(
             base_skill,
             system_prompt,
             payload,
         )
 
-        elapsed = time.time() - start_time
-
         if verbose:
-            print(f"\n[{current_agent} Output ({elapsed:.1f}s)]:\n{response}\n")
+            print(f"\n[{current_agent} Output]:\n{response}\n")
         else:
-            print(f"✅ {current_agent} successfully completed task in {elapsed:.1f}s.")
+            print(f"✅ {current_agent} successfully completed task.")
 
         if check_human_pause(response):
             print("🛑 HUMAN IN THE LOOP TRIGGERED. Pipeline paused.")
