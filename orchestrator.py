@@ -228,6 +228,13 @@ def is_path_safe(filepath):
             base_path / "public",
         ]
 
+        # --- NEW FIX: Whitelist specific root files for PaaS Deployments ---
+        allowed_root_files = [
+            base_path / "render.yaml",
+            base_path / "vercel.json",
+            base_path / "netlify.toml",
+        ]
+
         # Blacklisted files (never touch these even if they are in base_path)
         restricted_files = [
             base_path / "orchestrator.py",
@@ -239,6 +246,9 @@ def is_path_safe(filepath):
 
         if target_path in restricted_files:
             return False
+
+        if target_path in allowed_root_files:
+            return True
 
         # Blacklisted directories
         restricted_dirs = [
@@ -350,9 +360,27 @@ def list_directory(dir_path):
         return f"[SYSTEM NOTE: Directory {dir_path} not found.]"
 
 
+def read_directory_contents(dir_path):
+    """Reads and concatenates all markdown files in a given directory."""
+    content = ""
+    try:
+        for filename in os.listdir(dir_path):
+            if filename.endswith(".md"):
+                filepath = os.path.join(dir_path, filename)
+                content += f"\n--- FILE: {filename} ---\n{read_file(filepath)}\n"
+    except FileNotFoundError:
+        pass
+    return content
+
+
 def assemble_context(agent_name):
     memory_path = os.path.join(DOCS_DIR, "company", "lessons_learned.md")
     context = f"\n\n--- SYSTEM MEMORY ---\n{read_file(memory_path)}\n"
+
+    # Define dynamic paths
+    briefs_dir = os.path.join(DOCS_DIR, "product", "briefs")
+    contracts_dir = os.path.join(DOCS_DIR, "product", "contracts")
+    public_dir = os.path.join(BASE_DIR, "public")
 
     if "Strategy" in agent_name:
         context += read_file(os.path.join(DOCS_DIR, "company", "thesis.md"))
@@ -366,7 +394,8 @@ def assemble_context(agent_name):
         context += read_file(os.path.join(DOCS_DIR, "product", "current_run.md"))
         context += read_file(os.path.join(DOCS_DIR, "product", "architecture.md"))
 
-        public_dir = os.path.join(BASE_DIR, "public")
+        # Spec needs to see existing contracts to extend them!
+        context += f"\n\n--- EXISTING DATA CONTRACTS ---\n{read_directory_contents(contracts_dir)}"
         context += f"\n\n--- PUBLIC ASSETS ---\n{list_directory(public_dir)}"
 
     elif "Design" in agent_name:
@@ -375,7 +404,9 @@ def assemble_context(agent_name):
         context += read_file(os.path.join(DOCS_DIR, "product", "style_guide.md"))
         context += read_file(os.path.join(BASE_DIR, "src", "web", "lib", "content.ts"))
 
-        public_dir = os.path.join(BASE_DIR, "public")
+        # FIX: Give Design the actual Briefs and Contracts!
+        context += f"\n\n--- FEATURE BRIEFS ---\n{read_directory_contents(briefs_dir)}"
+        context += f"\n\n--- DATA CONTRACTS ---\n{read_directory_contents(contracts_dir)}"
         context += f"\n\n--- PUBLIC ASSETS ---\n{list_directory(public_dir)}"
 
         blueprint = read_file(os.path.join(DOCS_DIR, "templates", "design_blueprint.md"))
@@ -389,7 +420,9 @@ def assemble_context(agent_name):
         context += read_file(os.path.join(DOCS_DIR, "product", "style_guide.md"))
         context += read_file(os.path.join(BASE_DIR, "src", "web", "lib", "content.ts"))
 
-        public_dir = os.path.join(BASE_DIR, "public")
+        # FIX: Give Engineering the actual Briefs and Contracts!
+        context += f"\n\n--- FEATURE BRIEFS ---\n{read_directory_contents(briefs_dir)}"
+        context += f"\n\n--- DATA CONTRACTS ---\n{read_directory_contents(contracts_dir)}"
         context += f"\n\n--- PUBLIC ASSETS ---\n{list_directory(public_dir)}"
 
         teardown = read_file(os.path.join(DOCS_DIR, "templates", "teardown_manifest.md"))

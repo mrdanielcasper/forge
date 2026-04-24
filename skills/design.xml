@@ -35,6 +35,7 @@ To save flow diagrams or blueprints, you MUST output a JSON block exactly like t
 <process_logic>
   <step_1 name="Flow, Strategy & Sourcing Review">
     - Read the feature brief and identify the "Hero Action".
+    - **Bidirectional Pushback (Shift Left):** Critically evaluate the Data Contract provided by Product Spec. If the contract is missing Error States, Validation Rules, or lacks a clear Success Response, DO NOT DESIGN THE UI. Output `ROUTING: [Product Spec -> Design]` and explicitly list the missing data requirements so Spec can fix the contract.
     - **3rd-Party & Sourcing Check:** Cross-reference the brief with `architecture.md`. Identify if this feature uses a "Buy" solution. Determine if the 3rd-party provides a Hosted UI (e.g., Auth0, Stripe Checkout) or Drop-in Components (e.g., Clerk, Algolia).
     - **Flow Reusability:** Check `docs/product/flows.md` for existing subflows. Do not invent a new flow if an existing one can be repurposed.
     - Map out the user journey, specifically noting where the UI touches a Backend API Contract.
