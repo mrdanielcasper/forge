@@ -300,7 +300,6 @@ def run_shell_command(command):
         print(f"🛑 SECURITY BLOCK: AI attempted unauthorized command: {command}")
         return f"[ERROR: Command '{command}' not allowed.]"
 
-    # --- NEW SECURITY GUARDRAIL ---
     # Prevent shell injection (e.g., 'uv run pytest && rm -rf /')
     dangerous_chars = ["&&", ";", "|", ">", "<", "`", "$"]
     if any(char in command for char in dangerous_chars):
@@ -317,9 +316,19 @@ def run_shell_command(command):
             text=True,
             timeout=60,  # Prevent infinite hangs if tests freeze
         )
-        # Return stdout if successful, otherwise return the error traceback
+
         output = result.stdout if result.returncode == 0 else result.stderr
-        return output.strip() if output else "[Process completed with no output]"
+        output = output.strip() if output else "[Process completed with no output]"
+
+        # --- NEW FIX: Bounded Shell Logs to prevent API Token Burn ---
+        if len(output) > 3000:
+            output = (
+                output[:500]
+                + "\n\n...[SYSTEM NOTE: MASSIVE LOG TRUNCATED TO SAVE TOKENS]...\n\n"
+                + output[-2500:]
+            )
+
+        return output
     except Exception as e:
         return f"[ERROR: Command execution failed - {e}]"
 
