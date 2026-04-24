@@ -52,3 +52,9 @@ jobs:
 
       - name: Run Frontend Tests (Vitest)
         run: npm run test
+
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps
+
+      - name: Run E2E & A11y Tests (Playwright)
+        run: npm run test:e2e

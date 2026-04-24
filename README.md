@@ -7,9 +7,8 @@ By tying Strategy, Product Definition, Design, Engineering, and Launch Operation
 ## ⚠️ Template Customization Checklist
 Before deploying this OS to production, you must complete the following:
 - [ ] **Customize the Business Logic:** Read `TEMPLATE.md` to see which documents in the `docs/` folder you must overwrite with your own business logic.
-- [ ] **Write Real Tests:** The current `tests/api/test_initial.py` is a structural smoke test. Do not rely on CI until real tests are written for your app.
-- [ ] **Build the App Entrypoints:** Create your actual `src/api/main.py` and `src/web/main.tsx` files.
-- [ ] **Uncomment A11y Tests:** Once your first UI is built, uncomment `tests/web/a11y.e2e.ts` to enable strict accessibility scanning.
+- [ ] **Write Real Tests:** The current `tests/api/test_initial.py` and `tests/web/a11y.e2e.ts` files are structural smoke tests. Do not rely on CI until real tests are written for your app.
+- [ ] **Replace Scaffold Entrypoints:** Overwrite the stub `src/api/main.py` and `src/web/main.tsx` files with your actual application logic.
 
 ## 🚀 First Time Setup
 
@@ -88,7 +87,7 @@ This OS is built on a strict **"Git Push to Deploy"** PaaS (Platform-as-a-Servic
 * **Zero Custom Cloud-Formation:** We explicitly ban complex orchestrators (Kubernetes, Terraform) to avoid maintenance debt. 
 * **Backend:** Handled by a single highly optimized `Dockerfile` in `src/api/` intended for Render or Railway.
 * **Frontend:** Deployed instantly via Vercel or Netlify directly from the `src/web/` directory.
-* **Security & CI Gate:** All commits pushed to `main` trigger GitHub Actions. This pipeline runs Ruff (SAST), Biome, Pytest, Vitest, and TruffleHog (Verified Secret Scanning). **Only green builds are deployed.**
+* **Security & CI Gate:** All commits pushed to `main` trigger GitHub Actions. This pipeline runs Ruff (SAST), Biome, Pytest, Vitest, Playwright (E2E & A11y), and TruffleHog (Verified Secret Scanning). **Only green builds are deployed.**
 
 ## 🎨 Design System & Headless Components
 
@@ -125,7 +124,7 @@ python orchestrator.py "[TEARDOWN] The A/B test lost. Delete the variant B webho
 * **DO use `lessons_learned.md`:** If an agent hallucinates a Tailwind class or uses an outdated library, add a bullet point here.
 * **DO let the pre-commit hook work:** If `git commit` fails, do not bypass it. Use the `[HOTFIX]` command and force the AI to fix its own mess.
 * **DON'T bypass the ADR process:** Never let agents arbitrarily decide to add Postgres or Redis without your explicit "Accepted" stamp.
-* **DON'T let agents write to `architecture.md` without an accepted ADR:** Only the Engineering agent is allowed to update this file, and only *after* an ADR is accepted.
+* **DON'T let agents write to `architecture.md`:** Only the Engineering agent is allowed to update this file, and only *after* an ADR is accepted.
 * **DON'T bloat the backlog:** Strategy will actively try to kill bad ideas. Let it.
 
 ## 💡 Helpful Tips

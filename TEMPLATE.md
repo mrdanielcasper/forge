@@ -15,8 +15,8 @@ These files dictate how your AI agents behave and what they build. Open them and
 *(Tip: Delete the `# TEMPLATE: Replace with your own content` header from these files once you've fully customized them.)*
 
 ## ⚠️ 2. Files You Must UPDATE Before Launch
-- `src/api/main.py` - Build your actual FastAPI entry point.
-- `src/web/main.tsx` - Build your actual React frontend entry point.
+- `src/api/main.py` - Replace the scaffold FastAPI entry point with your actual app logic.
+- `src/web/main.tsx` - Replace the scaffold React frontend entry point with your actual app logic.
 - `tests/api/test_initial.py` - Replace the smoke tests with real unit tests.
 - `.github/workflows/dependabot-auto-merge.yml` - (Optional) Recreate and enable auto-merge only AFTER you have real tests protecting your `main` branch.
 
