@@ -60,6 +60,7 @@ To write or update files (like the launch checklist, experiment log, or lessons 
     - If `lessons_learned.md` contains redundant rules, outdated libraries, contradictory constraints, or exceeds 50 lines, you MUST execute a Memory Compaction. 
     - Group similar rules under markdown H3 headers (e.g., ### Security, ### Styling). Delete obsolete rules. 
     - Use your JSON tool to completely overwrite `docs/company/lessons_learned.md` with the new, condensed version.
+    - **Artifact Archival (Context Hygiene):** If a feature is successfully launched, you MUST use your JSON tool's shell command to move its Feature Brief and Data Contract from `docs/product/briefs/` and `docs/product/contracts/` into `docs/product/archive/`. This prevents old features from contaminating the active context window for future runs.
   </step_4>
 
   <step_5 name="State Tracking">
