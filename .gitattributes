@@ -1,0 +1,8 @@
+# Solopreneur OS: Git Line Ending Configuration
+
+# Auto-detect text files and normalize them to LF in the repo
+* text=auto
+
+# Enforce LF for bash scripts so they don't crash in CI or Linux environments
+scripts/githooks/pre-commit text eol=lf
+*.sh text eol=lf
