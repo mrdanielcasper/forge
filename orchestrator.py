@@ -66,7 +66,8 @@ class LLMClient:
 
         if provider not in self.clients:
             print(
-                f"❌ ERROR: API key for {provider} not found in .env file. Cannot route {agent_name}."
+                f"❌ ERROR: API key for {provider} not found in .env file. "
+                f"Cannot route {agent_name}."
             )
             sys.exit(1)
 
@@ -130,6 +131,16 @@ def extract_section(filepath, section_header):
     return f"[SYSTEM NOTE: Section '{section_header}' not found in {filepath}]"
 
 
+def list_directory(dir_path):
+    try:
+        files = os.listdir(dir_path)
+        if not files:
+            return f"[SYSTEM NOTE: Directory {dir_path} is empty.]"
+        return "\n".join([f"- {f}" for f in files])
+    except FileNotFoundError:
+        return f"[SYSTEM NOTE: Directory {dir_path} not found.]"
+
+
 def assemble_context(agent_name):
     context = f"\n\n--- SYSTEM MEMORY ---\n{read_file(f'{DOCS_DIR}/company/lessons_learned.md')}\n"
 
@@ -141,29 +152,39 @@ def assemble_context(agent_name):
     elif "Spec" in agent_name:
         context += extract_section(f"{DOCS_DIR}/product/backlog.md", "High Priority")
         context += read_file(f"{DOCS_DIR}/product/current_run.md")
-        context += read_file(f"{DOCS_DIR}/product/architecture.md")  # Added Architecture awareness
+        context += read_file(f"{DOCS_DIR}/product/architecture.md")
+        context += f"\n\n--- PUBLIC ASSETS ---\n{list_directory('public')}"
 
     elif "Design" in agent_name:
         context += read_file(f"{DOCS_DIR}/product/current_run.md")
         context += read_file(f"{DOCS_DIR}/product/flows.md")
+        context += read_file(f"{DOCS_DIR}/product/style_guide.md")
+        context += read_file("src/web/lib/content.ts")
+        context += f"\n\n--- PUBLIC ASSETS ---\n{list_directory('public')}"
+        blueprint = read_file(f"{DOCS_DIR}/templates/design_blueprint.md")
+        context += f"\n\n--- OUTPUT TEMPLATE ---\n{blueprint}"
 
     elif "Engineering" in agent_name:
         context += read_file(f"{DOCS_DIR}/product/current_run.md")
-        context += read_file(f"{DOCS_DIR}/product/architecture.md")  # Added Architecture awareness
-        context += read_file(f"{DOCS_DIR}/product/adr/README.md")  # Added ADR awareness
-        context += read_file(f"{DOCS_DIR}/product/flows.md")  # Added for Artifact Triangulation
+        context += read_file(f"{DOCS_DIR}/product/architecture.md")
+        context += read_file(f"{DOCS_DIR}/product/adr/README.md")
+        context += read_file(f"{DOCS_DIR}/product/flows.md")
+        context += read_file(f"{DOCS_DIR}/product/style_guide.md")
+        context += read_file("src/web/lib/content.ts")
+        context += f"\n\n--- PUBLIC ASSETS ---\n{list_directory('public')}"
 
     elif "Ops" in agent_name:
         context += read_file(f"{DOCS_DIR}/product/current_run.md")
         context += read_file(f"{DOCS_DIR}/ops/launch_checklist.md")
         context += read_file(f"{DOCS_DIR}/company/scorecard.md")
+        teardown = read_file(f"{DOCS_DIR}/templates/teardown_manifest.md")
+        context += f"\n\n--- TEARDOWN TEMPLATE ---\n{teardown}"
 
     return re.sub(r"\n{3,}", "\n\n", context)
 
 
 # --- PARSING & ROUTING LOGIC ---
 def check_human_pause(response_text):
-    # Added ADR_STATE to the pause triggers
     pauses = [
         r"REVERSIBILITY:\s*\[1-Way\]",
         r"DATA:\s*\[Pending",
@@ -245,7 +266,8 @@ def run_os(user_input):
         if check_human_pause(response):
             print("🛑 HUMAN IN THE LOOP TRIGGERED. Pipeline paused.")
             print(
-                "Action Required: Review the output (e.g. approve the ADR or execute Teardown), update files manually, and run OS again."
+                "Action Required: Review the output (e.g. approve the ADR or execute Teardown), "
+                "update files manually, and run OS again."
             )
             sys.exit(0)
 

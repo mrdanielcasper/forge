@@ -1,13 +1,25 @@
 version: 2
 updates:
-  # Scan NPM dependencies (Frontend)
+  # Maintain Python dependencies
+  - package-ecosystem: "pip"
+    directory: "/src/api" # Adjust to where your pyproject.toml is
+    schedule:
+      interval: "weekly"
+
+  # Maintain JS/TS dependencies
   - package-ecosystem: "npm"
+    directory: "/src/web" # Adjust to where your package.json is
+    schedule:
+      interval: "weekly"
+
+  # Maintain GitHub Actions
+  - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
-  
-  # Scan Python dependencies (Backend)
-  - package-ecosystem: "pip"
-    directory: "/"
+
+  # Maintain Docker base images
+  - package-ecosystem: "docker"
+    directory: "/src/api"
     schedule:
       interval: "weekly"

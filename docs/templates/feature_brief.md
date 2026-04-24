@@ -7,17 +7,16 @@
 - Primary user
 - Desired outcome
 
-## Business Goal
-- Which metric should move?
+## Strategic Sourcing & Business Goal
+- **Sourcing Posture:** [Build / Buy / OSS] (Enforced by Strategy)
+- **Target Metric:** Which specific metric from the Scorecard should move?
 
-## Scope
-- Smallest valuable release
-
-## Non-Goals
-- Explicitly excluded work
+## Scope & Non-Goals
+- **In Scope:** Smallest valuable release
+- **Non-Goals:** Explicitly excluded work to protect founder time
 
 ## Business Rules
-- Rules that must remain true
+- Rules that must remain true regardless of UI/Implementation.
 
 ## Acceptance Criteria
 - Happy path
@@ -31,4 +30,4 @@
 - Linked contracts, architecture, or external services
 
 ## Rollout Notes
-- Anything needed for a safe release
+- Anything needed for a safe release (Feature flags, beta cohorts)
