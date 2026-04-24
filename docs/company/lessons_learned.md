@@ -21,6 +21,10 @@
 - **Containerization:** When writing Dockerfiles for the FastAPI backend, always use a multi-stage build. Use `uv` to install dependencies in the builder stage to keep the final production image minimal. Never run the app as the `root` user.
 - **Cross-Platform File I/O:** Always explicitly define `encoding="utf-8"` when using Python's `open()` function to prevent Unicode crashes on Windows environments.
 - **Git Hooks & Auto-Fixers:** When utilizing auto-fixers (like Ruff or Biome) inside bash scripts or pre-commit hooks, always ensure the script runs `git add -u` to stage the modified files before completing the hook.
+- **File Naming Conventions (Strict):** To prevent case-sensitivity deployment crashes in Linux/Docker, you MUST adhere to the following file naming conventions:
+  - **Backend (Python):** Always use `snake_case.py` (e.g., `user_service.py`, `test_users.py`).
+  - **Frontend (React/TS):** Always use `kebab-case.ts` or `kebab-case.tsx` for ALL files, including React components (e.g., `user-profile.tsx`, `date-formatter.ts`). Never use PascalCase or camelCase for filenames.
+  - **Documentation:** Always use `snake_case.md`.
 
 ## AI & Orchestration
 - **LLM Fallbacks:** Always implement fallback or terminal states when parsing LLM outputs. If an LLM fails to return required tags (like a routing directive), the system must halt or default to human-in-the-loop to prevent infinite execution loops.
