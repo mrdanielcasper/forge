@@ -16,6 +16,7 @@ dependencies = [
 dev = [
     "pytest>=8.0.0",
     "pytest-bdd>=7.0.0",
+    "pytest-cov>=5.0.0",
     "ruff>=0.3.0",
 ]
 
@@ -33,7 +34,7 @@ ignore = []
 "tests/**/*.py" = ["S101"]
 
 [tool.pytest.ini_options]
-addopts = "-v --strict-markers"
+addopts = "-v --strict-markers --cov=orchestrator --cov-report=term-missing --cov-fail-under=40"
 pythonpath = "."
 testpaths = ["tests/api"] 
 markers = [
