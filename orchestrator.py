@@ -1,7 +1,10 @@
+import json
 import os
 import re
+import subprocess
 import sys
 import time
+from pathlib import Path
 
 # --- ABSOLUTE PATH RESOLUTION ---
 # This ensures the OS can be run from ANY directory without corrupting memory
@@ -126,13 +129,107 @@ class LLMClient:
 
             except Exception as e:
                 if attempt == max_retries - 1:
-                    print(f"\n❌ API ERROR({provider}-{model}) after {max_retries} attempts: {e}")
+                    print(f"\n❌ API ERROR ({provider}-{model}) after {max_retries} attempts: {e}")
                     sys.exit(1)
 
                 sleep_time = 2 ** (attempt + 1)
                 print(f"\n⚠️ API Interruption ({provider}): {e}")
-                print(f"🔄 Retrying in {sleep_time} seconds (Attempt {attempt + 1}/{max_retries}).")
+                print(f"🔄 Retrying in {sleep_time}s (Attempt {attempt + 1}/{max_retries}).")
                 time.sleep(sleep_time)
+
+
+# --- AI FILE I/O SANDBOX ---
+def is_path_safe(filepath):
+    """Sandbox security guardrail to prevent path traversal and unauthorized edits."""
+    try:
+        target_path = Path(filepath).resolve()
+        base_path = Path(BASE_DIR).resolve()
+
+        # Whitelisted directories
+        allowed_dirs = [
+            base_path / "src",
+            base_path / "tests",
+            base_path / "docs",
+            base_path / "public",
+        ]
+
+        # Blacklisted files (never touch these even if they are in base_path)
+        restricted_files = [
+            base_path / "orchestrator.py",
+            base_path / ".env",
+            base_path / "pyproject.toml",
+            base_path / "package.json",
+            base_path / "uv.lock",
+        ]
+
+        if target_path in restricted_files:
+            return False
+
+        # Blacklisted directories
+        restricted_dirs = [
+            base_path / ".github",
+            base_path / ".git",
+            base_path / "skills",  # AI cannot rewrite its own brain!
+        ]
+
+        if any(target_path.is_relative_to(restricted_dir) for restricted_dir in restricted_dirs):
+            return False
+
+        # Must be in whitelist
+        return any(target_path.is_relative_to(d) for d in allowed_dirs)
+
+    except Exception:
+        return False
+
+
+def write_file(filepath, content):
+    """Safely writes content to a file if it passes the sandbox checks."""
+    abs_path = os.path.join(BASE_DIR, filepath) if not os.path.isabs(filepath) else filepath
+
+    if not is_path_safe(abs_path):
+        print(f"🛑 SECURITY BLOCK: AI attempted to write to unauthorized path: {filepath}")
+        return f"[ERROR: Permission denied to write to {filepath}]"
+
+    try:
+        os.makedirs(os.path.dirname(abs_path), exist_ok=True)
+        with open(abs_path, "w", encoding="utf-8") as f:
+            f.write(content)
+        return f"[SUCCESS: File written to {filepath}]"
+    except Exception as e:
+        return f"[ERROR: Failed to write to {filepath} - {e}]"
+
+
+def run_shell_command(command):
+    """Executes an isolated shell command and returns stdout/stderr."""
+    # Strict whitelist of allowed automated commands
+    allowed_prefixes = ["uv run pytest", "npm run", "npx playwright", "npx @biomejs/biome"]
+
+    if not any(command.startswith(prefix) for prefix in allowed_prefixes):
+        print(f"🛑 SECURITY BLOCK: AI attempted unauthorized command: {command}")
+        return f"[ERROR: Command '{command}' not allowed.]"
+
+    # --- NEW SECURITY GUARDRAIL ---
+    # Prevent shell injection (e.g., 'uv run pytest && rm -rf /')
+    dangerous_chars = ["&&", ";", "|", ">", "<", "`", "$"]
+    if any(char in command for char in dangerous_chars):
+        print(f"🛑 SECURITY BLOCK: AI attempted shell chaining/injection: {command}")
+        return "[ERROR: Shell chaining and redirection are strictly prohibited.]"
+
+    try:
+        print(f"⚙️ Running automated tests: {command}")
+        result = subprocess.run(  # noqa: S602
+            command,
+            shell=True,
+            cwd=BASE_DIR,
+            capture_output=True,
+            text=True,
+            timeout=60,  # Prevent infinite hangs if tests freeze
+        )
+        # Return stdout if successful, otherwise return the error traceback
+        output = result.stdout if result.returncode == 0 else result.stderr
+        return output.strip() if output else "[Process completed with no output]"
+    except Exception as e:
+        return f"[ERROR: Command execution failed - {e}]"
 
 
 # --- DETERMINISTIC CONTEXT PRUNING ---
@@ -253,6 +350,40 @@ def extract_routing_queue(response_text):
     return None
 
 
+def execute_autonomous_actions(response_text):
+    """Scans the AI's response for a JSON payload and executes the sandbox tools."""
+    # Look for a JSON block explicitly tagged for the OS
+    match = re.search(r"```json\s*\n(.*?)```", response_text, re.DOTALL | re.IGNORECASE)
+    if not match:
+        return None  # No automated actions requested
+
+    try:
+        payload = json.loads(match.group(1).strip())
+        execution_logs = []
+
+        # 1. Execute File Writes
+        if "write_files" in payload:
+            for file_data in payload["write_files"]:
+                path = file_data.get("path")
+                content = file_data.get("content")
+                if path and content:
+                    result = write_file(path, content)
+                    execution_logs.append(result)
+
+        # 2. Execute Shell Commands (Testing/Linting)
+        if "run_commands" in payload:
+            for cmd in payload["run_commands"]:
+                result = run_shell_command(cmd)
+                execution_logs.append(f"$ {cmd}\n{result}")
+
+        return "\n\n".join(execution_logs)
+
+    except json.JSONDecodeError:
+        return "[ERROR: The OS failed to parse JSON action block. Must be perfectly formatted.]"
+    except Exception as e:
+        return f"[ERROR: OS Execution failed - {e}]"
+
+
 # --- CORE EXECUTION LOOP ---
 def run_os(user_input, flags=None):
     if flags is None:
@@ -319,6 +450,21 @@ def run_os(user_input, flags=None):
             print(f"\n[{current_agent} Output]:\n{response}\n")
         else:
             print(f"✅ {current_agent} successfully completed task.")
+
+        # --- AUTONOMOUS EXECUTION LOOP ---
+        action_results = execute_autonomous_actions(response)
+
+        if action_results:
+            print(f"\n🤖 [OS EXECUTING ACTIONS]:\n{action_results}")
+
+            # If a test failed, feed it immediately back to the Engineering agent!
+            if "FAIL" in action_results or "Error" in action_results or "error" in action_results:
+                print("⚠️ Tests failed! Routing back to Engineering for an autonomous fix...")
+                agent_queue.insert(0, "Engineering")
+                current_prompt = f"Changes caused failures.\n\nTEST OUTPUT:\n{action_results}"
+                continue  # Skip the routing queue and immediately re-run the agent
+
+        # ---------------------------------
 
         if check_human_pause(response):
             print("🛑 HUMAN IN THE LOOP TRIGGERED. Pipeline paused.")
