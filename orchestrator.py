@@ -1,6 +1,7 @@
 import os
 import re
 import sys
+import time
 
 # --- ABSOLUTE PATH RESOLUTION ---
 # This ensures the OS can be run from ANY directory without corrupting memory
@@ -55,18 +56,22 @@ class LLMClient:
                 print("❌ ERROR: anthropic package not found.")
                 sys.exit(1)
 
-    def call(self, agent_name, system_prompt, user_prompt):
-        if SMART_ROUTING and agent_name in MODEL_MAP:
-            provider = MODEL_MAP[agent_name]["provider"]
-            model = MODEL_MAP[agent_name]["model"]
-        else:
-            provider = DEFAULT_PROVIDER
-            model = "gpt-4o" if provider == "openai" else "claude-sonnet-4-5"
 
-        if provider not in self.clients:
-            print(f"❌ ERROR: API key for {provider} not found. Cannot route {agent_name}.")
-            sys.exit(1)
+def call(self, agent_name, system_prompt, user_prompt):
+    if SMART_ROUTING and agent_name in MODEL_MAP:
+        provider = MODEL_MAP[agent_name]["provider"]
+        model = MODEL_MAP[agent_name]["model"]
+    else:
+        provider = DEFAULT_PROVIDER
+        model = "gpt-4o" if provider == "openai" else "claude-sonnet-4-5"
 
+    if provider not in self.clients:
+        print(f"❌ ERROR: API key for {provider} not found. Cannot route {agent_name}.")
+        sys.exit(1)
+
+    # --- HARDENED RETRY LOGIC ---
+    max_retries = 3
+    for attempt in range(max_retries):
         try:
             if provider == "openai":
                 response = self.clients["openai"].chat.completions.create(
@@ -89,8 +94,15 @@ class LLMClient:
                 return response.content[0].text
 
         except Exception as e:
-            print(f"\n❌ API ERROR ({provider} - {model}): {e}")
-            sys.exit(1)
+            if attempt == max_retries - 1:
+                print(f"\n❌ API ERROR({provider}-{model}) after {max_retries} attempts: {e}")
+                sys.exit(1)
+
+            # Exponential backoff: sleep for 2s, then 4s, then crash.
+            sleep_time = 2 ** (attempt + 1)
+            print(f"\n⚠️ API Interruption ({provider}): {e}")
+            print(f"🔄 Retrying in {sleep_time} seconds (Attempt {attempt + 1}/{max_retries}).")
+            time.sleep(sleep_time)
 
 
 # --- DETERMINISTIC CONTEXT PRUNING ---
@@ -142,7 +154,8 @@ def assemble_context(agent_name):
 
     if "Strategy" in agent_name:
         context += read_file(os.path.join(DOCS_DIR, "company", "thesis.md"))
-        context += tail_file(os.path.join(DOCS_DIR, "company", "feedback_log.md"), lines=40)
+        feedback_log_path = os.path.join(DOCS_DIR, "company", "feedback_log.md")
+        context += tail_file(feedback_log_path, lines=40)
         context += read_file(os.path.join(DOCS_DIR, "company", "scorecard.md"))
 
     elif "Spec" in agent_name:
@@ -260,16 +273,26 @@ def run_os(user_input, flags=None):
 
         print(f"\n[🚀 Waking up {current_agent} Agent...]")
 
+        payload = f"CONTEXT:\n{assemble_context(base_skill)}\n\nTASK:\n{current_prompt}"
+
+        if verbose:
+            print(f"🔎 [VERBOSE]: Sending {len(payload)} chars of context to {current_agent}...")
+            print(f"--- PAYLOAD START ---\n{payload}\n--- PAYLOAD END ---")
+
+        start_time = time.time()
+
         response = llm.call(
             base_skill,
             system_prompt,
-            f"CONTEXT:\n{assemble_context(base_skill)}\n\nTASK:\n{current_prompt}",
+            payload,
         )
 
+        elapsed = time.time() - start_time
+
         if verbose:
-            print(f"\n[{current_agent} Output]:\n{response}\n")
+            print(f"\n[{current_agent} Output ({elapsed:.1f}s)]:\n{response}\n")
         else:
-            print(f"✅ {current_agent} successfully completed task.")
+            print(f"✅ {current_agent} successfully completed task in {elapsed:.1f}s.")
 
         if check_human_pause(response):
             print("🛑 HUMAN IN THE LOOP TRIGGERED. Pipeline paused.")
@@ -301,4 +324,8 @@ if __name__ == "__main__":
         sys.exit(1)
 
     # sys.argv[1] is exactly your prompt. sys.argv[2:] catches any flags.
-    run_os(sys.argv[1], sys.argv[2:])
+    try:
+        run_os(sys.argv[1], sys.argv[2:])
+    except KeyboardInterrupt:
+        print("\n\n🛑 OS Execution manually interrupted by user. Shutting down gracefully.")
+        sys.exit(0)
