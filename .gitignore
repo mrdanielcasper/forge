@@ -69,6 +69,10 @@ pip-log.txt
 pip-delete-this-directory.txt
 .pytest_cache/
 htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.sqlite3
 
 # ==========================================
 # General Logs & Temp Files (Best Practices)
