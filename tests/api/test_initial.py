@@ -1,12 +1,18 @@
+import os
+
 from fastapi.testclient import TestClient
 
 from orchestrator import (
+    BASE_DIR,
     assemble_context,
     check_human_pause,
+    execute_autonomous_actions,
     extract_routing_queue,
     extract_section,
+    is_path_safe,
     list_directory,
     read_file,
+    run_shell_command,
     tail_file,
 )
 from src.api.main import app
@@ -95,9 +101,58 @@ def test_list_directory(tmp_path):
 
 def test_assemble_context():
     """Ensure context builder correctly maps agents to files without crashing."""
-    # FIX: Test all branches to ensure we hit >40% coverage
     assert "SYSTEM MEMORY" in assemble_context("Strategy")
     assert "SYSTEM MEMORY" in assemble_context("Product Spec")
     assert "SYSTEM MEMORY" in assemble_context("Design")
     assert "SYSTEM MEMORY" in assemble_context("Engineering")
     assert "SYSTEM MEMORY" in assemble_context("Ops")
+
+
+# --- 4. AI SANDBOX & SECURITY TESTS ---
+def test_is_path_safe():
+    """Ensure the File I/O Sandbox correctly allows and blocks specific paths."""
+    # Valid sandboxed locations
+    assert is_path_safe(os.path.join(BASE_DIR, "src", "web", "main.tsx")) is True
+    assert is_path_safe(os.path.join(BASE_DIR, "tests", "api", "test_new.py")) is True
+
+    # Blocked critical files
+    assert is_path_safe(os.path.join(BASE_DIR, "orchestrator.py")) is False
+    assert is_path_safe(os.path.join(BASE_DIR, ".env")) is False
+
+    # Blocked hidden/infrastructure directories
+    assert is_path_safe(os.path.join(BASE_DIR, ".github", "workflows", "ci.yml")) is False
+    assert is_path_safe(os.path.join(BASE_DIR, "skills", "engineering.xml")) is False
+
+
+def test_run_shell_command_security():
+    """Ensure the shell command utility blocks unauthorized tools and shell injection."""
+    # Block unauthorized base commands
+    assert "not allowed" in run_shell_command("rm -rf /")
+    assert "not allowed" in run_shell_command("cat .env")
+
+    # Block shell chaining and injection attempts
+    assert "strictly prohibited" in run_shell_command("uv run pytest && ls")
+    assert "strictly prohibited" in run_shell_command("npm run build ; cat .env")
+    assert "strictly prohibited" in run_shell_command("npx playwright test | grep error")
+
+
+def test_execute_autonomous_actions():
+    """Ensure the JSON Action parser safely extracts and runs tools, or rejects bad input."""
+    # 1. Ignore normal text without JSON block
+    assert execute_autonomous_actions("I am thinking about the problem.") is None
+
+    # 2. Catch Malformed JSON (using implicit string concatenation to avoid linter errors)
+    bad_json = "```json\n{ invalid: json }\n```"
+    assert "failed to parse" in execute_autonomous_actions(bad_json)
+
+    # 3. Test valid JSON but ensure the Sandbox intercepts malicious actions
+    malicious_json = (
+        "```json\n"
+        '{"write_files": [{"path": ".env", "content": "HACKED"}], '
+        '"run_commands": ["npm run test && rm -rf /"]}\n'
+        "```"
+    )
+    result = execute_autonomous_actions(malicious_json)
+
+    assert "Permission denied" in result  # write_file Sandbox block
+    assert "strictly prohibited" in result  # run_shell_command Sandbox block
