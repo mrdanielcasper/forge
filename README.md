@@ -4,13 +4,20 @@ This repository is a lightweight, fully autonomous operating system for building
 
 By tying Strategy, Product Definition, Design, Engineering, and Launch Operations to durable markdown artifacts, this OS prevents architectural bloat, ensures legal/compliance safety, and maintains a "Zero-Debt" codebase.
 
+## ⚠️ Template Customization Checklist
+Before deploying this OS to production, you must complete the following:
+- [ ] **Customize the Business Logic:** Read `TEMPLATE.md` to see which documents in the `docs/` folder you must overwrite with your own business logic.
+- [ ] **Write Real Tests:** The current `tests/api/test_initial.py` is a structural smoke test. Do not rely on CI until real tests are written for your app.
+- [ ] **Build the App Entrypoints:** Create your actual `src/api/main.py` and `src/web/main.tsx` files.
+- [ ] **Uncomment A11y Tests:** Once your first UI is built, uncomment `tests/web/a11y.e2e.ts` to enable strict accessibility scanning.
+
 ## 🚀 First Time Setup
 
 1. **Environment Variables:** Copy `.env.example` to `.env` and add your API keys.
 2. **Backend Dependencies:** We use `uv` for lightning-fast, deterministic package management.
    ```bash
    # Install uv if you don't have it
-   curl -LsSf [https://astral.sh/uv/install.sh](https://astral.sh/uv/install.sh) | sh
+   curl -LsSf https://astral.sh/uv/install.sh | sh
    
    # Sync the locked dependencies (creates .venv automatically)
    uv sync
@@ -118,11 +125,10 @@ python orchestrator.py "[TEARDOWN] The A/B test lost. Delete the variant B webho
 * **DO use `lessons_learned.md`:** If an agent hallucinates a Tailwind class or uses an outdated library, add a bullet point here.
 * **DO let the pre-commit hook work:** If `git commit` fails, do not bypass it. Use the `[HOTFIX]` command and force the AI to fix its own mess.
 * **DON'T bypass the ADR process:** Never let agents arbitrarily decide to add Postgres or Redis without your explicit "Accepted" stamp.
-* **DON'T let agents write to `architecture.md`:** Only the Engineering agent is allowed to update this file, and only *after* an ADR is accepted.
+* **DON'T let agents write to `architecture.md` without an accepted ADR:** Only the Engineering agent is allowed to update this file, and only *after* an ADR is accepted.
 * **DON'T bloat the backlog:** Strategy will actively try to kill bad ideas. Let it.
 
 ## 💡 Helpful Tips
 
-* **Smart Routing:** Keep `SMART_ROUTING=true` in your `.env`. The Orchestrator automatically routes logic-heavy tasks (Strategy) to deep-reasoning models, coding tasks to Claude 3.7 Sonnet, and formatting tasks to cheaper models.
+* **Smart Routing:** Keep `SMART_ROUTING=true` in your `.env`. The Orchestrator automatically routes logic-heavy tasks (Strategy) to deep-reasoning models (like `o4-mini`), and coding tasks to standard models (like `claude-sonnet-4-5`).
 * **Context Pruning:** The Orchestrator uses deterministic pruning (`tail_file`) to only send the most recent logs to the AI, saving you massive API costs.
-* **Dependabot Auto-Merge:** Rely on your `ci.yml` safety net. Let Dependabot merge non-breaking dependency updates automatically in the background.

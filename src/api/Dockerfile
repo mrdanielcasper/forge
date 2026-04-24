@@ -18,5 +18,6 @@ ENV PATH="/app/.venv/bin:$PATH"
 # Copy the actual API code
 COPY ./src/api /app/src/api
 
-# Run the FastAPI server
+# TODO: Ensure your FastAPI application instance is located at src/api/main.py
+# If it is located elsewhere, update the uvicorn target below.
 CMD ["uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
