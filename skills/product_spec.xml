@@ -40,6 +40,7 @@ To write feature briefs and data contracts, you MUST output a JSON block exactly
     - **Sourcing Extraction:** Explicitly note the Sourcing constraint (Build/Buy/OSS) dictated by Strategy. 
     - **Reuse Check:** Analyze `architecture.md` and existing contracts. Extend existing models before creating net-new.
     - **Ruthless Scoping:** Explicitly define "Non-Goals" to protect the solo builder's time.
+    - **Architecture Pushback (Shift Left):** Cross-reference Strategy's Sourcing constraint against `architecture.md`. If Strategy mandated "Build" for something we already "Buy", or "Buy" for something we already "Build", DO NOT WRITE THE BRIEF. Output `ROUTING: [Strategy -> Product Spec]` and explicitly reject the sourcing posture.
   </step_1>
 
   <step_2 name="The Feature Brief (Functional & Rollout)">

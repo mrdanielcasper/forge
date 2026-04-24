@@ -51,6 +51,7 @@ To write or update files (like the launch checklist, experiment log, or lessons 
   <step_3 name="Outcome Evaluation & Teardown Routing">
     - **Data Ingestion:** If the founder provided raw metrics in the prompt, compare the data against the Scorecard target or A/B variants.
     - Use your JSON tool to update `docs/ops/experiment_log.md` with the Result and Learning.
+    - **Compliance Pushback (Shift Left):** If your audit reveals PII leaks, accessibility regressions, or false marketing claims in the delivered code, DO NOT PROCEED TO LAUNCH. Output `ROUTING: [Engineering -> Ops]`, detail the exact legal/compliance failure, and force Engineering to patch it.
     - **Teardown Mandate:** If a feature is "Killed" or an A/B test variant loses, you MUST explicitly output a completed `Teardown Manifest` using the template. Instruct the Engineering agent to execute this manifest to delete the dead code, UI, and telemetry events to prevent tech debt.
   </step_3>
 

@@ -35,6 +35,7 @@ To write or update files (like the backlog or experiment log), you MUST output a
     - Extract the specific pain and current workaround from `docs/company/feedback_log.md`.
     - **Kill Criteria Check:** If the signal matches any "Kill Criteria" in `docs/company/thesis.md`, immediately reject it.
     - **Regulatory & Brand Risk:** Explicitly assess if this request touches regulated data (HIPAA, GDPR, CCPA, Financial/PCI). If it introduces massive compliance overhead for a solo founder, recommend killing it.
+    - **Signal Gate (Shift Left):** If the prompt is a feature request without an underlying user pain point or measurable business metric, DO NOT LOG IT. Output `ROUTING: [None]` and explicitly inform the human that the request is rejected for lacking raw signal.
   </step_1>
 
   <step_2 name="Value Profiling & Reversibility">
