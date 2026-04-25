@@ -416,6 +416,29 @@ def extract_section(filepath, section_header):
     return f"[SYSTEM NOTE: Section '{section_header}' not found in {filepath}]"
 
 
+def get_active_artifacts():
+    """Parses current_run.md to extract the exact file paths of active artifacts."""
+    run_path = os.path.join(DOCS_DIR, "product", "current_run.md")
+    content = read_file(run_path)
+
+    # Find all lines in the Linked Artifacts section that contain a file path
+    # e.g., "- Brief: docs/product/briefs/feature.md"
+    artifacts = []
+
+    # Extract the block between Linked Artifacts and the next header
+    match = re.search(r"(?i)## Linked Artifacts(.*?)(?=\n## |\Z)", content, re.DOTALL)
+    if match:
+        block = match.group(1)
+        # Find anything that looks like a markdown path
+        paths = re.findall(r"(docs/[a-zA-Z0-9_/-]+\.md)", block)
+        for path in paths:
+            # Make sure we don't accidentally load current_run.md inside current_run.md
+            if "current_run.md" not in path:
+                artifacts.append(path)
+
+    return artifacts
+
+
 def list_directory(dir_path):
     try:
         files = os.listdir(dir_path)
@@ -454,7 +477,6 @@ def assemble_context(agent_name):
     context = f"\n\n--- SYSTEM MEMORY ---\n{read_file(memory_path)}\n"
 
     # Define dynamic paths
-    briefs_dir = os.path.join(DOCS_DIR, "product", "briefs")
     contracts_dir = os.path.join(DOCS_DIR, "product", "contracts")
     public_dir = os.path.join(BASE_DIR, "public")
 
@@ -470,8 +492,16 @@ def assemble_context(agent_name):
         context += read_file(os.path.join(DOCS_DIR, "product", "current_run.md"))
         context += read_file(os.path.join(DOCS_DIR, "product", "architecture.md"))
 
-        # Spec needs to see existing contracts to extend them!
-        context += f"\n\n--- EXISTING DATA CONTRACTS ---\n{read_directory_contents(contracts_dir)}"
+        # --- CONTEXT FUNNELING: Only load active artifacts ---
+        context += "\n\n--- ACTIVE FEATURE ARTIFACTS ---\n"
+        for artifact_path in get_active_artifacts():
+            fname = os.path.basename(artifact_path)
+            fcontent = read_file(os.path.join(BASE_DIR, artifact_path))
+            context += f"\n--- FILE: {fname} ---\n{fcontent}\n"
+
+        # List existing contracts instead of reading all their contents to save tokens
+        contract_list = list_directory(contracts_dir)
+        context += f"\n\n--- EXISTING DATA CONTRACTS (Dir Listing) ---\n{contract_list}"
         context += f"\n\n--- PUBLIC ASSETS ---\n{list_directory(public_dir)}"
 
     elif "Design" in agent_name:
@@ -480,9 +510,13 @@ def assemble_context(agent_name):
         context += read_file(os.path.join(DOCS_DIR, "product", "style_guide.md"))
         context += read_file(os.path.join(BASE_DIR, "src", "web", "lib", "content.ts"))
 
-        # Give Design the actual Briefs and Contracts!
-        context += f"\n\n--- FEATURE BRIEFS ---\n{read_directory_contents(briefs_dir)}"
-        context += f"\n\n--- DATA CONTRACTS ---\n{read_directory_contents(contracts_dir)}"
+        # --- CONTEXT FUNNELING: Only load active artifacts ---
+        context += "\n\n--- ACTIVE FEATURE ARTIFACTS ---\n"
+        for artifact_path in get_active_artifacts():
+            fname = os.path.basename(artifact_path)
+            fcontent = read_file(os.path.join(BASE_DIR, artifact_path))
+            context += f"\n--- FILE: {fname} ---\n{fcontent}\n"
+
         context += f"\n\n--- PUBLIC ASSETS ---\n{list_directory(public_dir)}"
 
         blueprint = read_file(os.path.join(DOCS_DIR, "templates", "design_blueprint.md"))
@@ -496,9 +530,13 @@ def assemble_context(agent_name):
         context += read_file(os.path.join(DOCS_DIR, "product", "style_guide.md"))
         context += read_file(os.path.join(BASE_DIR, "src", "web", "lib", "content.ts"))
 
-        # Give Engineering the actual Briefs and Contracts!
-        context += f"\n\n--- FEATURE BRIEFS ---\n{read_directory_contents(briefs_dir)}"
-        context += f"\n\n--- DATA CONTRACTS ---\n{read_directory_contents(contracts_dir)}"
+        # --- CONTEXT FUNNELING: Only load active artifacts ---
+        context += "\n\n--- ACTIVE FEATURE ARTIFACTS ---\n"
+        for artifact_path in get_active_artifacts():
+            fname = os.path.basename(artifact_path)
+            fcontent = read_file(os.path.join(BASE_DIR, artifact_path))
+            context += f"\n--- FILE: {fname} ---\n{fcontent}\n"
+
         context += f"\n\n--- PUBLIC ASSETS ---\n{list_directory(public_dir)}"
 
         teardown = read_file(os.path.join(DOCS_DIR, "templates", "teardown_manifest.md"))
@@ -508,6 +546,13 @@ def assemble_context(agent_name):
         context += read_file(os.path.join(DOCS_DIR, "product", "current_run.md"))
         context += read_file(os.path.join(DOCS_DIR, "ops", "launch_checklist.md"))
         context += read_file(os.path.join(DOCS_DIR, "company", "scorecard.md"))
+
+        # --- CONTEXT FUNNELING: Only load active artifacts ---
+        context += "\n\n--- ACTIVE FEATURE ARTIFACTS ---\n"
+        for artifact_path in get_active_artifacts():
+            fname = os.path.basename(artifact_path)
+            fcontent = read_file(os.path.join(BASE_DIR, artifact_path))
+            context += f"\n--- FILE: {fname} ---\n{fcontent}\n"
 
         teardown = read_file(os.path.join(DOCS_DIR, "templates", "teardown_manifest.md"))
         context += f"\n\n--- TEARDOWN TEMPLATE ---\n{teardown}"
