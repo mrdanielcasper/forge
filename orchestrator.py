@@ -1,6 +1,7 @@
 import json
 import os
 import re
+import shlex
 import subprocess
 import sys
 import time
@@ -355,11 +356,17 @@ def run_shell_command(command):
         print(f"🛑 SECURITY BLOCK: AI attempted shell chaining/injection: {command}")
         return "[ERROR: Shell chaining and redirection are strictly prohibited.]"
 
+    # Safely parse the command string into a list for subprocess
+    try:
+        args = shlex.split(command, posix=False)
+    except ValueError as e:
+        return f"[ERROR: Failed to parse command - {str(e)}]"
+
     try:
         print(f"⚙️ Running automated tests: {command}")
-        result = subprocess.run(  # noqa: S602
-            command,
-            shell=True,
+        result = subprocess.run(  # noqa: S603
+            args,  # <-- Pass the list, not the raw string
+            shell=False,  # <-- THE CRITICAL FIX
             cwd=BASE_DIR,
             capture_output=True,
             text=True,
@@ -370,7 +377,7 @@ def run_shell_command(command):
         output = result.stdout if result.returncode == 0 else result.stderr
         output = output.strip() if output else "[Process completed with no output]"
 
-        # Bounded Shell Logs to prevent API Token Burn
+        # --- NEW FIX: Bounded Shell Logs to prevent API Token Burn ---
         if len(output) > 3000:
             output = (
                 output[:500]
