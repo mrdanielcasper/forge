@@ -27,6 +27,15 @@ To save flow diagrams or blueprints, you MUST output a JSON block exactly like t
       "path": "docs/product/flows.md",
       "content": "Updated mermaid flows..."
     }
+  ],
+  "append_to_file": [
+    {
+      "path": "docs/ops/experiment_log.md",
+      "content": "| 2026-05-01 | New Feature | Hypothesis | Metric | Result |"
+    }
+  ],
+  "run_commands": [
+    "npm run test"
   ]
 }
 ```

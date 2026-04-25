@@ -14,6 +14,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DOCS_DIR = os.path.join(BASE_DIR, "docs")
 AGENTS_DIR = os.path.join(BASE_DIR, "agents")
 
+
 # --- PRE-FLIGHT BOOT CHECK ---
 # Ensures users have installed dependencies before the OS tries to run automated tests
 def check_dependencies():
@@ -22,13 +23,14 @@ def check_dependencies():
         missing.append("npm install")
     if not os.path.exists(os.path.join(BASE_DIR, ".venv")):
         missing.append("uv sync")
-        
+
     if missing:
         print("🛑 OS BOOT FAILED: Missing dependencies.")
         print("Please run the following commands before starting the OS:")
         for cmd in missing:
             print(f"  $ {cmd}")
         sys.exit(1)
+
 
 check_dependencies()
 
@@ -54,6 +56,7 @@ MODEL_MAP = {
     "Engineering": {"provider": "openrouter", "model": "openai/gpt-4o"},
     "Growth Ops": {"provider": "openrouter", "model": "openai/gpt-4o-mini"},
 }
+
 
 # --- TELEMETRY LOGGER ---
 def log_token_usage(agent, provider, model, p_tokens, c_tokens, elapsed):
@@ -248,7 +251,7 @@ def is_path_safe(filepath):
             base_path / "public",
         ]
 
-        # --- NEW FIX: Whitelist specific root files for PaaS Deployments ---
+        # Whitelist specific root files for PaaS Deployments
         allowed_root_files = [
             base_path / "render.yaml",
             base_path / "vercel.json",
@@ -304,6 +307,32 @@ def write_file(filepath, content):
         return f"[ERROR: Failed to write to {filepath} - {e}]"
 
 
+def append_file(filepath, content):
+    """Safely appends content to a file if it passes the sandbox checks."""
+    abs_path = os.path.join(BASE_DIR, filepath) if not os.path.isabs(filepath) else filepath
+
+    if not is_path_safe(abs_path):
+        print(f"🛑 SECURITY BLOCK: AI attempted to write to unauthorized path: {filepath}")
+        return f"[ERROR: Permission denied to append to {filepath}]"
+
+    try:
+        os.makedirs(os.path.dirname(abs_path), exist_ok=True)
+
+        # Check if the file currently exists and ensure it ends with a newline
+        prefix = ""
+        if os.path.exists(abs_path):
+            with open(abs_path, encoding="utf-8") as f:
+                current_content = f.read()
+                if current_content and not current_content.endswith("\n"):
+                    prefix = "\n"
+
+        with open(abs_path, "a", encoding="utf-8") as f:
+            f.write(prefix + content + "\n")
+        return f"[SUCCESS: Data appended to {filepath}]"
+    except Exception as e:
+        return f"[ERROR: Failed to append to {filepath} - {e}]"
+
+
 def run_shell_command(command):
     """Executes an isolated shell command and returns stdout/stderr."""
     # Strict whitelist of allowed automated commands
@@ -341,7 +370,7 @@ def run_shell_command(command):
         output = result.stdout if result.returncode == 0 else result.stderr
         output = output.strip() if output else "[Process completed with no output]"
 
-        # --- NEW FIX: Bounded Shell Logs to prevent API Token Burn ---
+        # Bounded Shell Logs to prevent API Token Burn
         if len(output) > 3000:
             output = (
                 output[:500]
@@ -390,18 +419,28 @@ def extract_section(filepath, section_header):
 def list_directory(dir_path):
     try:
         files = os.listdir(dir_path)
-        if not files:
-            return f"[SYSTEM NOTE: Directory {dir_path} is empty.]"
-        return "\n".join([f"- {f}" for f in files])
+        # --- HYGIENE PATCH: Filter out junk from context ---
+        ignored = {".git", "node_modules", ".venv", "__pycache__"}
+        filtered_files = [f for f in files if not (f.endswith(".csv") or f in ignored)]
+
+        if not filtered_files:
+            return f"[SYSTEM NOTE: Directory {dir_path} is empty or only contains ignored files.]"
+        return "\n".join([f"- {f}" for f in filtered_files])
     except FileNotFoundError:
         return f"[SYSTEM NOTE: Directory {dir_path} not found.]"
 
 
 def read_directory_contents(dir_path):
-    """Reads and concatenates all markdown files in a given directory."""
+    """Reads and concatenates safe files in a given directory."""
     content = ""
     try:
+        ignored = {".git", "node_modules", ".venv", "__pycache__"}
         for filename in os.listdir(dir_path):
+            # --- HYGIENE PATCH: Skip token-wasting files ---
+            if filename.endswith(".csv") or filename in ignored:
+                continue
+
+            # Currently restricted to markdown
             if filename.endswith(".md"):
                 filepath = os.path.join(dir_path, filename)
                 content += f"\n--- FILE: {filename} ---\n{read_file(filepath)}\n"
@@ -506,19 +545,27 @@ def execute_autonomous_actions(response_text):
         return None  # No automated actions requested
 
     try:
-        # --- FIX: Clean hidden characters and allow strict=False for Markdown newlines ---
-        json_str = match.group(1).strip().replace('\xa0', ' ')
+        json_str = match.group(1).strip().replace("\xa0", " ")
         payload = json.loads(json_str, strict=False)
-        
+
         execution_logs = []
 
-        # 1. Execute File Writes
+        # 1. Execute File Writes (Sledgehammer)
         if "write_files" in payload:
             for file_data in payload["write_files"]:
                 path = file_data.get("path")
                 content = file_data.get("content")
                 if path and content:
                     result = write_file(path, content)
+                    execution_logs.append(result)
+
+        # 1.5 Execute File Appends (Scalpel)
+        if "append_to_file" in payload:
+            for file_data in payload["append_to_file"]:
+                path = file_data.get("path")
+                content = file_data.get("content")
+                if path and content:
+                    result = append_file(path, content)
                     execution_logs.append(result)
 
         # 2. Execute Shell Commands (Testing/Linting)
@@ -560,7 +607,7 @@ def run_os(user_input, flags=None):
         teardown_prompt = user_input.replace("[TEARDOWN]", "").strip()
         current_prompt = teardown_prompt + "\n\nCRITICAL: Execute Teardown."
     elif "[START:" in user_input:
-        # NEW: Allow CEO to bypass Strategy and start at any agent
+        # Allow CEO to bypass Strategy and start at any agent
         match = re.search(r"\[START:\s*(.*?)\]", user_input)
         if match:
             agent_queue.append(match.group(1).strip())

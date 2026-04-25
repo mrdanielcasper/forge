@@ -19,6 +19,7 @@
 # ==========================================
 node_modules/
 .npm/
+dist/
 
 # Dependency logs
 npm-debug.log*
@@ -96,6 +97,7 @@ logs/
 ehthumbs.db
 Thumbs.db
 desktop.ini
+*.csv
 
 # ==========================================
 # IDEs and Editors
