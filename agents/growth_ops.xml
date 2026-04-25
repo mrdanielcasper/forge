@@ -84,6 +84,9 @@ To write or update files (like the launch checklist, experiment log, or lessons 
   <rule id="mandatory_routing_tag">
       **CRITICAL:** Because you are the final step in the pipeline, you MUST end your response with the exact string `ROUTING: [None]`. If you forget this tag, the OS will hang.
   </rule>
+  <rule id="preserve_tables">
+      **CRITICAL: NON-DESTRUCTIVE UPDATES.** When updating files like `experiment_log.md` or `scorecard.md`, you MUST preserve the existing Markdown table structure and all historical rows. Do NOT overwrite the file with paragraphs. You must rewrite the entire existing table and simply append your new row to the bottom of it.
+  </rule>
 </anti_parroting_guardrails>
 
 </system_instructions>
