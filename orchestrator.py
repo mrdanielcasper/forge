@@ -30,11 +30,11 @@ DEFAULT_PROVIDER = os.environ.get("DEFAULT_PROVIDER", "openai").lower()
 
 # --- SMART MODEL MAPPING ---
 MODEL_MAP = {
-    "Strategy": {"provider": "openai", "model": "o4-mini"},
-    "Product Spec": {"provider": "openai", "model": "gpt-4o-mini"},
-    "Design": {"provider": "anthropic", "model": "claude-sonnet-4-5"},
-    "Engineering": {"provider": "anthropic", "model": "claude-sonnet-4-5"},
-    "Growth Ops": {"provider": "openai", "model": "gpt-4o-mini"},
+    "Strategy": {"provider": "openrouter", "model": "openai/gpt-4o-mini"},
+    "Product Spec": {"provider": "openrouter", "model": "openai/gpt-4o"},
+    "Design": {"provider": "openrouter", "model": "anthropic/claude-3.5-sonnet"},
+    "Engineering": {"provider": "openrouter", "model": "anthropic/claude-3.5-sonnet"},
+    "Growth Ops": {"provider": "openrouter", "model": "openai/gpt-4o-mini"},
 }
 
 
