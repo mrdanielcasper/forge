@@ -1,3 +1,4 @@
+/// <reference types="vitest" />
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 
@@ -9,9 +10,10 @@ export default defineConfig({
       "/api": "http://localhost:8000",
     },
   },
-  // ADD THIS BLOCK: Tell Vitest to only run tests in the web folder
   test: {
+    globals: true,                  // <-- ADDED: Makes describe, test, and expect global
+    setupFiles: "./tests/setup.ts", // <-- ADDED: Automatically injects jest-dom matchers
     include: ["tests/web/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
-    environment: "happy-dom", // standard for React component testing
+    environment: "happy-dom",
   },
 });
