@@ -54,8 +54,13 @@
                   "content": "exact file content here"
                 }
               ],
+              "append_to_file": [
+                {
+                  "path": "docs/ops/experiment_log.md",
+                  "content": "| 2026-05-01 | New Feature | Hypothesis | Metric | Result |"
+                }
+            ],
               "run_commands": [
-                "uv run pytest path/to/test.py",
                 "npm run test"
               ]
             }
