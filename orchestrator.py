@@ -12,7 +12,7 @@ from pathlib import Path
 # This ensures the OS can be run from ANY directory without corrupting memory
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DOCS_DIR = os.path.join(BASE_DIR, "docs")
-SKILLS_DIR = os.path.join(BASE_DIR, "skills")
+SKILLS_DIR = os.path.join(BASE_DIR, "agents")
 
 # --- PRE-FLIGHT BOOT CHECK ---
 # Ensures users have installed dependencies before the OS tries to run automated tests
@@ -274,7 +274,7 @@ def is_path_safe(filepath):
         restricted_dirs = [
             base_path / ".github",
             base_path / ".git",
-            base_path / "skills",  # AI cannot rewrite its own brain!
+            base_path / "agents",  # AI cannot rewrite its own brain!
         ]
 
         if any(target_path.is_relative_to(restricted_dir) for restricted_dir in restricted_dirs):
