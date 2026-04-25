@@ -32,11 +32,10 @@ DEFAULT_PROVIDER = os.environ.get("DEFAULT_PROVIDER", "openai").lower()
 MODEL_MAP = {
     "Strategy": {"provider": "openrouter", "model": "openai/gpt-4o-mini"},
     "Product Spec": {"provider": "openrouter", "model": "openai/gpt-4o"},
-    "Design": {"provider": "openrouter", "model": "anthropic/claude-3.5-sonnet"},
-    "Engineering": {"provider": "openrouter", "model": "anthropic/claude-3.5-sonnet"},
+    "Design": {"provider": "openrouter", "model": "openai/gpt-4o"},
+    "Engineering": {"provider": "openrouter", "model": "openai/gpt-4o"},
     "Growth Ops": {"provider": "openrouter", "model": "openai/gpt-4o-mini"},
 }
-
 
 # --- TELEMETRY LOGGER ---
 def log_token_usage(agent, provider, model, p_tokens, c_tokens, elapsed):
@@ -541,6 +540,15 @@ def run_os(user_input, flags=None):
         agent_queue.append("Engineering")
         teardown_prompt = user_input.replace("[TEARDOWN]", "").strip()
         current_prompt = teardown_prompt + "\n\nCRITICAL: Execute Teardown."
+    elif "[START:" in user_input:
+        # NEW: Allow CEO to bypass Strategy and start at any agent
+        match = re.search(r"\[START:\s*(.*?)\]", user_input)
+        if match:
+            agent_queue.append(match.group(1).strip())
+            current_prompt = user_input
+        else:
+            agent_queue.append("Strategy")
+            current_prompt = user_input
     else:
         agent_queue.append("Strategy")
         current_prompt = user_input
