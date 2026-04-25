@@ -18,7 +18,7 @@ Before deploying this OS to production, you must complete the following:
 2. **Backend Dependencies:** We use `uv` for lightning-fast, deterministic package management.
    ```bash
    # Install uv if you don't have it
-   curl -LsSf [https://astral.sh/uv/install.sh](https://astral.sh/uv/install.sh) | sh
+   curl -LsSf https://astral.sh/uv/install.sh | sh
    
    # Sync the locked dependencies (creates .venv automatically)
    uv sync
