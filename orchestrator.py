@@ -488,7 +488,10 @@ def execute_autonomous_actions(response_text):
         return None  # No automated actions requested
 
     try:
-        payload = json.loads(match.group(1).strip())
+        # --- FIX: Clean hidden characters and allow strict=False for Markdown newlines ---
+        json_str = match.group(1).strip().replace('\xa0', ' ')
+        payload = json.loads(json_str, strict=False)
+        
         execution_logs = []
 
         # 1. Execute File Writes
@@ -508,10 +511,10 @@ def execute_autonomous_actions(response_text):
 
         return "\n\n".join(execution_logs)
 
-    except json.JSONDecodeError:
+    except json.JSONDecodeError as e:
         return (
-            "[ERROR: The OS failed to parse your JSON action block. "
-            "Ensure it is perfectly formatted.]"
+            f"[ERROR: The OS failed to parse your JSON action block. Python Error: {e}. "
+            "Ensure you are properly escaping quotes and newlines inside your Markdown strings.]"
         )
     except Exception as e:
         return f"[ERROR: OS Execution failed - {e}]"
