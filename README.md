@@ -1,8 +1,10 @@
-# Solo Software Company OS
+# Solopreneur OS 🏭
 
-This repository is a lightweight, fully autonomous operating system for building and scaling a one-person software company. It replaces ad-hoc chat interfaces with a strict, deterministic agent pipeline designed to protect a solo founder's most precious resources: **Time, Focus, IP, and Capital.**
+An autonomous, local-first AI software factory that builds verifiable, zero-debt React + FastAPI applications.
 
-By tying Strategy, Product Definition, Design, Engineering, and Launch Operations to durable markdown artifacts, this OS prevents architectural bloat, ensures legal/compliance safety, and maintains a "Zero-Debt" codebase.
+Unlike generic coding assistants, Solopreneur OS operates as a strict assembly line. It breaks software development down into five distinct AI personas, forces them to write their own documentation, and strictly executes Test-Driven Development (TDD) before moving to production.
+
+---
 
 ## ⚠️ Template Customization Checklist
 Before deploying this OS to production, you must complete the following:
@@ -16,7 +18,7 @@ Before deploying this OS to production, you must complete the following:
 2. **Backend Dependencies:** We use `uv` for lightning-fast, deterministic package management.
    ```bash
    # Install uv if you don't have it
-   curl -LsSf https://astral.sh/uv/install.sh | sh
+   curl -LsSf [https://astral.sh/uv/install.sh](https://astral.sh/uv/install.sh) | sh
    
    # Sync the locked dependencies (creates .venv automatically)
    uv sync
@@ -30,10 +32,16 @@ Before deploying this OS to production, you must complete the following:
    ```bash
    git config core.hooksPath scripts/githooks
    ```
+5. **Boot the Factory:**
+   ```bash
+   uv run python orchestrator.py "What should we build first?" --os-verbose
+   ```
+
+---
 
 ## 🧠 The 6-Node Architecture
 
-The OS is driven by a deterministic Python script (`orchestrator.py`) that acts as your Chief of Staff, routing tasks to 5 specialized LLM agents defined in the `skills/` folder.
+The OS is driven by a deterministic Python script (`orchestrator.py`) that acts as your Chief of Staff, routing tasks to 5 specialized LLM agents defined in the `agents/` folder.
 
 1. **The Orchestrator (`orchestrator.py`):** A deterministic Python router. It parses routing tags, aggressively prunes context to save tokens, manages the multi-agent execution queue, and dynamically routes tasks to the most cost-effective LLM provider (`SMART_ROUTING`).
 2. **Strategy (`strategy.xml`):** The business filter. Evaluates ideas based on Cost of Delay, Reversibility (1-Way vs 2-Way doors), Legal/Compliance risk, and Strategic Sourcing (Build vs. Buy vs. OSS). 
@@ -42,6 +50,8 @@ The OS is driven by a deterministic Python script (`orchestrator.py`) that acts 
 5. **Engineering (`engineering.xml`):** The builder & janitor. Drafts ADRs for your approval, writes Interfaces/Mocks first, executes TDD (Red-Green-Harden), runs linters, integrates `shadcn/ui` components, and ruthlessly deletes dead code during Teardowns. 
 6. **Growth/Ops (`growth_ops.xml`):** The privacy officer and analyst. Enforces compliance, defines infrastructure "Kill Switches" (e.g., alert thresholds), evaluates strict A/B or Pre/Post cohorts, and commands Teardowns.
 
+---
+
 ## 👤 The Operator's Role (Human-in-the-Loop)
 
 You are the CEO, the lead investor, and the final decision-maker. You **do not** write code or draft specs. Your job is to:
@@ -49,6 +59,8 @@ You are the CEO, the lead investor, and the final decision-maker. You **do not**
 2. **Approve Architecture:** When the pipeline pauses with `ADR_STATE: [Pending Human]`, you read the drafted ADR in `docs/product/adr/` and change its status to "Accepted".
 3. **Provide Raw Data:** When Growth/Ops asks for launch metrics, you paste the raw numbers from your dashboard (Datadog, PostHog, etc.).
 4. **Curate the Memory:** Update `docs/company/lessons_learned.md` when an agent makes a mistake, ensuring it never happens twice.
+
+---
 
 ## 📁 Repository Structure & Canonical Documents
 
@@ -66,7 +78,7 @@ tests/
 docs/                 # Global OS memory, ADRs, Contracts, and Strategy
   product/
     style_guide.md    # Canonical visual brand rules
-skills/               # The LLM prompt definitions
+agents/               # The LLM prompt definitions
 scripts/
   githooks/
     pre-commit        # The automated local security/lint bouncer
@@ -81,6 +93,8 @@ postcss.config.js     # CSS processing bridge
 playwright.config.ts  # End-to-End browser testing config
 ```
 
+---
+
 ## 🏗️ Infrastructure & Continuous Integration
 
 This OS is built on a strict **"Git Push to Deploy"** PaaS (Platform-as-a-Service) model:
@@ -89,6 +103,8 @@ This OS is built on a strict **"Git Push to Deploy"** PaaS (Platform-as-a-Servic
 * **Frontend:** Deployed instantly via Vercel or Netlify directly from the `src/web/` directory.
 * **Security & CI Gate:** All commits pushed to `main` trigger GitHub Actions. This pipeline runs Ruff (SAST), Biome, Pytest, Vitest, Playwright (E2E & A11y), and TruffleHog (Verified Secret Scanning). **Only green builds are deployed.**
 
+---
+
 ## 🎨 Design System & Headless Components
 
 The OS utilizes **Code as the Design Kit**. There is no Figma. 
@@ -96,28 +112,50 @@ The OS utilizes **Code as the Design Kit**. There is no Figma.
 * **Shadcn/UI:** The Engineering agent generates accessible, un-styled Radix components on the fly (via `components.json`) directly into the `src/web/components/ui/` folder.
 * **Tailwind CSS:** Components are styled using the strict semantic variables locked into `tailwind.config.js` and `index.css`.
 
-## 🛠️ How To Use It
+---
 
-You interface with the entire company through a single command: `python orchestrator.py "Your prompt here"`.
+## 🛠️ How To Prompt the OS
 
-### The Standard Workflow
-When a user requests a new feature:
+The Orchestrator listens to specific syntax tags in your prompt to allow you to "steer" the factory.
+
+### 1. The Standard Run (New Features)
+To start a brand new feature from scratch, simply talk to the Strategy agent.
 ```bash
-python orchestrator.py "3 users asked for data exports in the feedback log."
+uv run python orchestrator.py "Let's build a Waitlist landing page to capture emails before launch." --os-verbose
 ```
 *The Orchestrator wakes up Strategy -> Spec -> Engineering (ADR Draft) -> [PAUSE FOR YOUR APPROVAL] -> Engineering (Build) -> Ops.*
 
-### Fast-Track: The Hotfix
-When a test fails, or you need to tweak UI, bypass Strategy and Spec:
+### 2. The CEO Override (Targeted Starts)
+If you already know exactly what you want and want to skip the Strategy agent, use the `[START: AgentName]` tag. This injects your prompt directly into that specific agent's brain.
 ```bash
-python orchestrator.py "[HOTFIX] The button on the landing page is blue, make it red."
+uv run python orchestrator.py "[START: Engineering] The CEO has updated the styling guidelines. Re-write the Waitlist UI to use the new brand colors."
+```
+*Valid agents: Strategy, Product Spec, Design, Engineering, Ops.*
+
+### 3. The Hotfix (Bug Squashing)
+If your application breaks, use the `[HOTFIX]` tag. This bypasses all PM/Design steps, wakes up the Engineering agent immediately, and forces it to fix the code.
+```bash
+uv run python orchestrator.py "[HOTFIX] The /api/waitlist route is throwing a 500 internal server error when the email is missing."
 ```
 
-### Fast-Track: The Teardown
-When an experiment fails, order the Engineering agent to aggressively scrub the codebase:
+### 4. The Teardown (Removing Tech Debt)
+AI codebases accumulate dead code. To safely delete a feature, use the `[TEARDOWN]` tag. The OS will trace the feature's dependencies and surgically remove it without breaking the rest of the app.
 ```bash
-python orchestrator.py "[TEARDOWN] The A/B test lost. Delete the variant B webhook settings code and UI."
+uv run python orchestrator.py "[TEARDOWN] We are pivoting. Remove the Waitlist feature from the frontend and backend."
 ```
+
+---
+
+## 🔒 Security & Architecture
+
+Solopreneur OS is built for local execution and maximum data integrity.
+
+* **Context Funneling:** The OS actively parses `current_run.md` to only load the exact files relevant to the active feature. This prevents O(N) token scaling issues as your codebase grows.
+* **Non-Destructive Logging:** Tracking files like `experiment_log.md` use a specialized `append_to_file` tool to ensure the AI never accidentally overwrites your historical database.
+* **Component RAG:** The Engineering and Design agents are dynamically fed a list of your existing `src/web/components/ui/` files so they never hallucinate imports.
+* **The Sandbox:** The Orchestrator intercepts all shell commands. It only allows safe commands like `uv run pytest`, `npm run test`, and linting. It actively blocks shell injection and restricted path traversals.
+
+---
 
 ## ⚖️ Do's and Don'ts
 
