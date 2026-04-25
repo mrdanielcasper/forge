@@ -28,6 +28,7 @@
 
 ## AI & Orchestration
 - **LLM Fallbacks:** Always implement fallback or terminal states when parsing LLM outputs. If an LLM fails to return required tags (like a routing directive), the system must halt or default to human-in-the-loop to prevent infinite execution loops.
+- **Evals (Prompt Regression Testing):** Do not test prompt changes in production. Use the tests/evals/ suite to run deterministic assertions on AI outputs (e.g., checking for valid JSON escaping and correct ROUTING: tags). Because Evals cost real API credits, they are explicitly excluded from standard CI runs and must be run manually via uv run pytest tests/evals/.
 
 ## Strategy & Ops
 - **Test Types:** Never recommend an A/B test unless the feature targets the public landing page. Deep-app features lack the traffic for statistical significance; always use Pre/Post Cohorts.

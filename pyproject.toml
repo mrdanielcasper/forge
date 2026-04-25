@@ -39,4 +39,5 @@ testpaths = ["tests/api"]
 markers = [
     "core: core system functionality",
     "integration: testing 3rd party APIs",
+    "eval: AI evaluation tests (makes real LLM API calls, costs money)",
 ]
