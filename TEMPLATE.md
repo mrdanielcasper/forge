@@ -23,7 +23,7 @@ These files dictate how your AI agents behave and what they build. Open them and
 ## 🔒 3. Structural Files (Do NOT Delete)
 These files are the engine of your OS. Leave them alone unless you are explicitly upgrading the OS architecture:
 - `orchestrator.py` - The brain of the operation.
-- `skills/*.xml` - The AI agent prompts.
+- `agents/*.xml` - The AI agent prompts.
 - `scripts/githooks/pre-commit` - Your security bouncer.
 - `docs/templates/*` - Used by the AI to generate standardized documents.
 - `docs/company/lessons_learned.md` - Your system memory. (Add to this, but don't delete the global OWASP/Architecture rules).
