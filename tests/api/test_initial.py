@@ -22,6 +22,15 @@ client = TestClient(app)
 
 
 # --- 1. API SCAFFOLD TESTS ---
+def test_get_system_status():
+    """Ensure the system status endpoint returns a 200 OK and valid schema."""
+    response = client.get("/api/v1/system/status")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "operational"
+    assert "version" in data
+
+
 def test_health_endpoint():
     """Ensure the FastAPI scaffold boots and responds to health checks."""
     response = client.get("/health")

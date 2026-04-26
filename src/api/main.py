@@ -1,6 +1,10 @@
 from fastapi import FastAPI
 
+from src.api.routers.system import router as system_router
+
 app = FastAPI(title="Solopreneur OS API")
+
+app.include_router(system_router)
 
 
 @app.get("/health")
