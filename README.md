@@ -9,8 +9,8 @@ Unlike generic coding assistants, Solopreneur OS operates as a strict assembly l
 ## ⚠️ Template Customization Checklist
 Before deploying this OS to production, you must complete the following:
 - [ ] **Customize the Business Logic:** Read `TEMPLATE.md` to see which documents in the `docs/` folder you must overwrite with your own business logic.
-- [ ] **Write Real Tests:** The current `tests/api/test_initial.py` and `tests/web/a11y.e2e.ts` files are structural smoke tests. Do not rely on CI until real tests are written for your app.
-- [ ] **Replace Scaffold Entrypoints:** Overwrite the stub `src/api/main.py` and `src/web/main.tsx` files with your actual application logic.
+- [ ] **Write Real Tests:** The current `tests/api/test_initial.py` and `tests/web/integration.e2e.ts` cover the internal System Status exemplar. Use them as a blueprint, then write tests for your own app.
+- [ ] **Replace Scaffold Entrypoints:** Overwrite the `SystemStatus` exemplar in `src/api/main.py` and `src/web/main.tsx` with your actual application logic.
 
 ## 🚀 First Time Setup
 
@@ -121,21 +121,21 @@ The Orchestrator listens to specific syntax tags in your prompt to allow you to 
 ### 1. The Standard Run (New Features)
 To start a brand new feature from scratch, simply talk to the Strategy agent.
 ```bash
-uv run python orchestrator.py "Let's build a Waitlist landing page to capture emails before launch." --os-verbose
+uv run python orchestrator.py "Let's build a Lead Capture Form landing page to capture emails before launch." --os-verbose
 ```
 *The Orchestrator wakes up Strategy -> Spec -> Engineering (ADR Draft) -> [PAUSE FOR YOUR APPROVAL] -> Engineering (Build) -> Ops.*
 
 ### 2. The CEO Override (Targeted Starts)
 If you already know exactly what you want and want to skip the Strategy agent, use the `[START: AgentName]` tag. This injects your prompt directly into that specific agent's brain.
 ```bash
-uv run python orchestrator.py "[START: Engineering] The CEO has updated the styling guidelines. Re-write the Waitlist UI to use the new brand colors."
+uv run python orchestrator.py "[START: Engineering] The CEO has updated the styling guidelines. Re-write the Lead Capture Form UI to use the new brand colors."
 ```
 *Valid agents: Strategy, Product Spec, Design, Engineering, Ops.*
 
 ### 3. The Hotfix (Bug Squashing)
 If your application breaks, use the `[HOTFIX]` tag. This bypasses all PM/Design steps, wakes up the Engineering agent immediately, and forces it to fix the code.
 ```bash
-uv run python orchestrator.py "[HOTFIX] The /api/waitlist route is throwing a 500 internal server error when the email is missing."
+uv run python orchestrator.py "[HOTFIX] The /api/leads route is throwing a 500 internal server error when the email is missing."
 ```
 
 ### 4. The Teardown (Removing Tech Debt)

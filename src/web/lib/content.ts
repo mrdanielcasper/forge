@@ -21,13 +21,6 @@ export const content = {
     invalidUrl: "Please enter a valid URL.",
     invalidEmail: "Please enter a valid email address.",
   },
-  features: {
-    webhooks: {
-      title: "Connect Discord Alerts",
-      description: "Send workflow alerts to the Discord channel your team already uses.",
-      success: "Discord webhook saved. Alerts will use this channel.",
-    },
-  },
   systemStatus: {
     title: "System Status",
     loading: "Loading status...",

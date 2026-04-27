@@ -1,6 +1,7 @@
 # Launch Checklist
 
 ## Before Launch
+
 - [ ] Target persona and pain are named.
 - [ ] Feature brief and contract are current.
 - [ ] Success metric and review date are defined.
@@ -8,16 +9,19 @@
 - [ ] Sensitive data handling has been checked.
 
 ## Launch Message
-- Audience: Users who want simple Discord-based workflow alerts.
-- Core promise: Configure alerts quickly without building a full notification stack.
-- Channel: Product update note or direct user outreach.
+
+- Audience: [Who is this for?]
+- Core promise: [What does it do for them?]
+- Channel: [Where will we announce it?]
 
 ## Measurement
-- Primary metric: Activation through completed webhook setup.
-- Review date: One week after release.
-- Supporting signal: Validation error rate during setup.
+
+- Primary metric: [What defines success?]
+- Review date: [When will we review the data?]
+- Supporting signal: [What secondary data helps context?]
 
 ## After Launch
+
 - [ ] Capture user feedback in docs/company/feedback_log.md.
 - [ ] Record the outcome in docs/ops/experiment_log.md.
 - [ ] Decide whether to expand, iterate, or stop.
