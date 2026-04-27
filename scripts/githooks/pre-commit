@@ -26,7 +26,6 @@ fi
 
 # 2. RUN LINTER / TYPE CHECKER
 echo "🧹 Running Linters..."
-# Fail fast with descriptive errors if ANY linter exits with a non-zero code
 uv run ruff check . --fix || { echo "❌ ERROR: Ruff linting failed. Fix formatting/type errors before committing."; exit 1; }
 uv run ruff format . || { echo "❌ ERROR: Ruff formatting failed."; exit 1; }
 npx @biomejs/biome check --write . || { echo "❌ ERROR: Biome linting/formatting failed."; exit 1; }
@@ -39,6 +38,7 @@ fi
 # 3. RUN TESTS
 echo "🧪 Running Test Suite..."
 uv run pytest || { echo "❌ ERROR: Python tests failed. The Engineering Agent introduced a regression."; exit 1; }
+
 npx vitest run || { echo "❌ ERROR: JS/TS tests failed. The Engineering Agent introduced a regression."; exit 1; }
 
 echo "✅ All checks passed. Committing safely."

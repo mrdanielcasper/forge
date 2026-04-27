@@ -18,10 +18,19 @@ export default defineConfig({
       use: { ...devices["Desktop Chrome"] },
     },
   ],
-  // Automatically start the Vite dev server before running tests
-  webServer: {
-    command: "npm run dev",
-    url: "http://localhost:3000",
-    reuseExistingServer: !process.env.CI,
-  },
+  // Boot both the FastAPI backend and Vite frontend for true E2E testing
+  webServer: [
+    {
+      command: "uv run uvicorn src.api.main:app --port 8000",
+      url: "http://127.0.0.1:8000/health",
+      reuseExistingServer: !process.env.CI,
+      timeout: 120000,
+    },
+    {
+      command: "npm run dev",
+      url: "http://localhost:3000",
+      reuseExistingServer: !process.env.CI,
+      timeout: 120000,
+    },
+  ],
 });
