@@ -5,9 +5,9 @@ import shlex
 import subprocess
 import sys
 import time
-import urllib.error
-import urllib.request
 from pathlib import Path
+
+import litellm
 
 # --- ABSOLUTE PATH RESOLUTION ---
 # This ensures the OS can be run from ANY directory without corrupting memory
@@ -49,13 +49,15 @@ MAX_CHAIN_STEPS = 10
 SMART_ROUTING = os.environ.get("SMART_ROUTING", "true").lower() == "true"
 DEFAULT_PROVIDER = os.environ.get("DEFAULT_PROVIDER", "openai").lower()
 
-# --- SMART MODEL MAPPING ---
+# --- SMART MODEL MAPPING (LiteLLM Format) ---
+# LiteLLM uses the standard format: provider/model_name
 MODEL_MAP = {
-    "Strategy": {"provider": "openrouter", "model": "openai/gpt-4o-mini"},
-    "Product Spec": {"provider": "openrouter", "model": "openai/gpt-4o"},
-    "Design": {"provider": "openrouter", "model": "openai/gpt-4o"},
-    "Engineering": {"provider": "openrouter", "model": "openai/gpt-4o"},
-    "Growth Ops": {"provider": "openrouter", "model": "openai/gpt-4o-mini"},
+    "Strategy": "openrouter/openai/gpt-4o-mini",
+    "Product Spec": "openrouter/openai/gpt-4o",
+    "Design": "openrouter/openai/gpt-4o",
+    "Engineering": "openrouter/openai/gpt-4o",
+    "Growth Ops": "openrouter/openai/gpt-4o-mini",
+    "Ops": "openrouter/openai/gpt-4o-mini",
 }
 
 
@@ -81,160 +83,57 @@ def log_token_usage(agent, provider, model, p_tokens, c_tokens, elapsed):
 
 
 # --- API CLIENT ---
-PROVIDERS = {
-    "anthropic": {
-        "url": "https://api.anthropic.com/v1/messages",
-        "headers": lambda key: {
-            "x-api-key": key,
-            "anthropic-version": "2023-06-01",
-            "anthropic-beta": "prompt-caching-2024-07-31",
-            "content-type": "application/json",
-        },
-        "body": lambda model, system, user: {
-            "model": model,
-            "max_tokens": 4096,
-            "temperature": 0.2,
-            "system": [
-                {
-                    "type": "text",
-                    "text": system,
-                    "cache_control": {"type": "ephemeral"},  # Native Prompt Caching
-                }
-            ],
-            "messages": [{"role": "user", "content": user}],
-        },
-        "extract": lambda r: r["content"][0]["text"],
-        # Combine standard tokens with cached tokens so telemetry remains accurate
-        "tokens": lambda r: (
-            r["usage"].get("input_tokens", 0) + r["usage"].get("cache_read_input_tokens", 0),
-            r["usage"].get("output_tokens", 0),
-        ),
-    },
-    "openai": {
-        "url": "https://api.openai.com/v1/chat/completions",
-        "headers": lambda key: {
-            "Authorization": f"Bearer {key}",
-            "Content-Type": "application/json",
-        },
-        "body": lambda model, system, user: {
-            "model": model,
-            "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
-        },
-        "extract": lambda r: r["choices"][0]["message"]["content"],
-        "tokens": lambda r: (
-            r["usage"].get("prompt_tokens", 0),
-            r["usage"].get("completion_tokens", 0),
-        ),
-    },
-    "openrouter": {
-        "url": "https://openrouter.ai/api/v1/chat/completions",
-        "headers": lambda key: {
-            "Authorization": f"Bearer {key}",
-            "Content-Type": "application/json",
-            "HTTP-Referer": "http://localhost",
-            "X-Title": "Solopreneur OS",
-        },
-        "body": lambda model, system, user: {
-            "model": model,
-            "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
-        },
-        "extract": lambda r: r["choices"][0]["message"]["content"],
-        "tokens": lambda r: (
-            r["usage"].get("prompt_tokens", 0),
-            r["usage"].get("completion_tokens", 0),
-        ),
-    },
-}
-
-
 class LLMClient:
     def __init__(self):
-        self.keys = {
-            "openai": os.environ.get("OPENAI_API_KEY"),
-            "anthropic": os.environ.get("ANTHROPIC_API_KEY"),
-            "openrouter": os.environ.get("OPENROUTER_API_KEY"),
-        }
+        # SHIFT LEFT: LiteLLM automatically picks up os.environ keys (OPENROUTER_API_KEY, etc.)
+        # We enforce strict key validation here so the OS fails on boot, not mid-run.
+        if SMART_ROUTING and not os.environ.get("OPENROUTER_API_KEY"):
+            print("❌ SHIFT LEFT ERROR: SMART_ROUTING is ON, but OPENROUTER_API_KEY is missing.")
+            sys.exit(1)
 
     def call(self, agent_name, system_prompt, user_prompt):
+        # 1. Determine Model using LiteLLM syntax
         if SMART_ROUTING and agent_name in MODEL_MAP:
-            provider = MODEL_MAP[agent_name]["provider"]
-            model = MODEL_MAP[agent_name]["model"]
+            model = MODEL_MAP[agent_name]
         else:
-            provider = DEFAULT_PROVIDER
-            if provider == "openai":
-                model = "gpt-4o"
-            elif provider == "anthropic":
-                model = "claude-3-5-sonnet-latest"
-            else:
-                # --- TRACER BULLET FIX: RELIABLE & CHEAP ---
-                # Swapped the rate-limited free tier for gpt-4o-mini.
-                # Extremely reliable, and costs ~ $0.01 per run.
+            if DEFAULT_PROVIDER == "openai":
                 model = "openai/gpt-4o-mini"
+            elif DEFAULT_PROVIDER == "anthropic":
+                model = "anthropic/claude-3-5-sonnet-latest"
+            else:
+                model = "openrouter/openai/gpt-4o-mini"
 
-        if provider not in PROVIDERS:
-            print(f"❌ ERROR: Provider '{provider}' is not configured in PROVIDERS dict.")
+        # 2. Format Messages
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
+        ]
+
+        # 3. Execute with built-in retries (Zero Debt: LiteLLM handles backoff)
+        start_time = time.time()
+        try:
+            # drop_params=True ensures compatibility if a provider doesn't support specific kwargs
+            response = litellm.completion(
+                model=model, messages=messages, temperature=0.2, num_retries=3, drop_params=True
+            )
+
+            text = response.choices[0].message.content
+
+            # Universal Token Telemetry
+            p_tokens = response.usage.prompt_tokens
+            c_tokens = response.usage.completion_tokens
+            elapsed = time.time() - start_time
+
+            log_token_usage(agent_name, "litellm", model, p_tokens, c_tokens, elapsed)
+
+            return text
+
+        except litellm.AuthenticationError as e:
+            print(f"\n❌ API AUTH FATAL ERROR ({model}): {e}")
             sys.exit(1)
-
-        api_key = self.keys.get(provider)
-        if not api_key:
-            print(f"❌ ERROR: API key for {provider} not found in .env.")
+        except Exception as e:
+            print(f"\n❌ API ERROR ({model}): {e}")
             sys.exit(1)
-
-        config = PROVIDERS[provider]
-        max_retries = 3
-
-        for attempt in range(max_retries):
-            try:
-                start_time = time.time()
-
-                req = urllib.request.Request(  # noqa: S310
-                    config["url"],
-                    data=json.dumps(config["body"](model, system_prompt, user_prompt)).encode(
-                        "utf-8"
-                    ),
-                    headers=config["headers"](api_key),
-                    method="POST",
-                )
-
-                with urllib.request.urlopen(req, timeout=120) as response:  # noqa: S310
-                    result = json.loads(response.read().decode("utf-8"))
-                    text = config["extract"](result)
-                    p_tokens, c_tokens = config["tokens"](result)
-
-                elapsed = time.time() - start_time
-                log_token_usage(agent_name, provider, model, p_tokens, c_tokens, elapsed)
-
-                return text
-
-            except urllib.error.HTTPError as e:
-                error_body = e.read().decode("utf-8") if e.fp else str(e)
-                if attempt == max_retries - 1:
-                    print(
-                        f"\n❌ API FATAL ERROR ({provider} - {model}): HTTP {e.code} - {error_body}"
-                    )
-                    sys.exit(1)
-
-                sleep_time = 2 ** (attempt + 1)
-                print(f"\n⚠️ API Interruption ({provider}): HTTP {e.code} - {error_body}")
-                print(
-                    f"🔄 Retrying in {sleep_time} seconds (Attempt {attempt + 1}/{max_retries})..."
-                )
-                time.sleep(sleep_time)
-
-            except Exception as e:
-                if attempt == max_retries - 1:
-                    print(
-                        f"\n❌ API FATAL ERROR ({provider} - {model}) "
-                        f"after {max_retries} attempts: {e}"
-                    )
-                    sys.exit(1)
-
-                sleep_time = 2 ** (attempt + 1)
-                print(f"\n⚠️ API Interruption ({provider}): {e}")
-                print(
-                    f"🔄 Retrying in {sleep_time} seconds (Attempt {attempt + 1}/{max_retries})..."
-                )
-                time.sleep(sleep_time)
 
 
 # --- AI FILE I/O SANDBOX ---
@@ -429,7 +328,6 @@ def get_active_artifacts():
     content = read_file(run_path)
 
     # Find all lines in the Linked Artifacts section that contain a file path
-    # e.g., "- Brief: docs/product/briefs/feature.md"
     artifacts = []
 
     # Extract the block between Linked Artifacts and the next header
@@ -699,7 +597,7 @@ def run_os(user_input, flags=None):
 
         print(f"\n[🚀 Waking up {current_agent} Agent...]")
 
-        # Combine the Skill XML and the Context into a single System Prompt for maximum caching
+        # Combine the Skill XML and the Context into a single System Prompt
         full_system_prompt = f"{skill_prompt}\n\nCONTEXT:\n{assemble_context(base_skill)}"
         user_task = f"TASK:\n{current_prompt}"
 
@@ -768,7 +666,6 @@ if __name__ == "__main__":
         print("Usage: python orchestrator.py 'Your prompt' [--os-verbose]")
         sys.exit(1)
 
-    # sys.argv[1] is exactly your prompt. sys.argv[2:] catches any flags.
     try:
         run_os(sys.argv[1], sys.argv[2:])
     except KeyboardInterrupt:

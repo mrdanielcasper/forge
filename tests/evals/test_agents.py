@@ -42,4 +42,4 @@ def test_strategy_accepts_valid_b2b_ideas(client):
 
     # HIGH-SIGNAL: Explicitly assert the exact route target
     queue = extract_routing_queue(response)
-    assert queue and queue[0] == "Product Spec", f"FAIL: Routed to Product Spec, got {queue}"
+    assert queue and queue[0] == "Product Spec", f"FAILED: Wanted Product Spec route, got {queue}"
