@@ -477,7 +477,11 @@ def check_human_pause(response_text):
         r"TEARDOWN:\s*\[Needed\]",
         r"ADR_STATE:\s*\[Pending Human\]",
     ]
-    return any(re.search(p, response_text, re.IGNORECASE) for p in pauses)
+    for p in pauses:
+        match = re.search(p, response_text, re.IGNORECASE)
+        if match:
+            return match.group(0)  # Return the specific matched reason
+    return None
 
 
 def extract_routing_queue(response_text):
@@ -637,13 +641,33 @@ def run_os(user_input, flags=None):
 
         # ---------------------------------
 
-        if check_human_pause(response):
+        pause_reason = check_human_pause(response)
+        if pause_reason:
             print("🛑 HUMAN IN THE LOOP TRIGGERED. Pipeline paused.")
             print(
                 "💡 Action Required: Review the output (e.g. approve the ADR or execute "
                 "Teardown), update files manually, and run OS again."
             )
+            # ZERO DEBT: Write handoff state for external orchestrators or human reference
+            handoff_path = os.path.join(DOCS_DIR, "ops", "handoff.md")
+            os.makedirs(os.path.dirname(handoff_path), exist_ok=True)
+            with open(handoff_path, "w", encoding="utf-8") as f:
+                f.write(f"STATUS: PAUSED\nREASON: {pause_reason}\nAGENT: {current_agent}\n")
             sys.exit(0)
+
+        new_queue = extract_routing_queue(response)
+
+        if new_queue is None:
+            print("⚠️ WARNING: Agent forgot ROUTING tag. Halting to prevent loop.")
+            break
+
+        if len(new_queue) == 0:
+            print("✅ Terminal state reached. Pipeline complete.")
+            handoff_path = os.path.join(DOCS_DIR, "ops", "handoff.md")
+            os.makedirs(os.path.dirname(handoff_path), exist_ok=True)
+            with open(handoff_path, "w", encoding="utf-8") as f:
+                f.write("STATUS: COMPLETE\nREASON: Terminal state reached.\n")
+            break
 
         new_queue = extract_routing_queue(response)
 
@@ -662,12 +686,32 @@ def run_os(user_input, flags=None):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) < 2:
+    prompt = ""
+    flags = []
+
+    # Parse args dynamically
+    for arg in sys.argv[1:]:
+        if arg.startswith("--"):
+            flags.append(arg)
+        elif not prompt:
+            prompt = arg
+
+    # Fallback to reading the prompt from handoff.md if no CLI prompt is provided
+    handoff_path = os.path.join(DOCS_DIR, "ops", "handoff.md")
+    if not prompt and os.path.exists(handoff_path):
+        with open(handoff_path, encoding="utf-8") as f:
+            content = f.read()
+            match = re.search(r"PROMPT:\s*(.+)", content, re.IGNORECASE)
+            if match:
+                prompt = match.group(1).strip()
+
+    if not prompt:
         print("Usage: python orchestrator.py 'Your prompt' [--os-verbose]")
+        print("Or provide PROMPT: <instruction> inside docs/ops/handoff.md")
         sys.exit(1)
 
     try:
-        run_os(sys.argv[1], sys.argv[2:])
+        run_os(prompt, flags)
     except KeyboardInterrupt:
         print("\n\n🛑 OS Execution manually interrupted by user. Shutting down gracefully.")
         sys.exit(0)

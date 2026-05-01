@@ -55,13 +55,15 @@ def test_routing_terminal_state():
 def test_human_pause_detection():
     """Ensure the orchestrator catches critical architectural shifts."""
     response = "This requires a database change. ADR_STATE: [Pending Human]"
-    assert check_human_pause(response) is True
+    # Updated to assert the exact string return instead of a boolean True
+    assert check_human_pause(response) == "ADR_STATE: [Pending Human]"
 
 
 def test_human_pause_safe():
     """Ensure the orchestrator doesn't pause on safe outputs."""
     response = "The design looks good. REVERSIBILITY: [2-Way] ADR_STATE: [None]"
-    assert check_human_pause(response) is False
+    # Updated to assert None instead of a boolean False
+    assert check_human_pause(response) is None
 
 
 # --- 3. ORCHESTRATOR UTILITY TESTS ---
