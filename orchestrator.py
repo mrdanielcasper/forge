@@ -82,6 +82,29 @@ def log_token_usage(agent, provider, model, p_tokens, c_tokens, elapsed):
         print(f"⚠️ Could not write telemetry log: {e}")
 
 
+def log_jsonl_telemetry(
+    agent, provider, model, p_tokens, c_tokens, elapsed, system_prompt, user_prompt, response
+):
+    """Appends full execution context to a JSONL file for Brain OS / Human debugging."""
+    log_path = os.path.join(DOCS_DIR, "ops", "telemetry.jsonl")
+    try:
+        os.makedirs(os.path.dirname(log_path), exist_ok=True)
+        entry = {
+            "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+            "agent": agent,
+            "provider": provider,
+            "model": model,
+            "prompt_tokens": p_tokens,
+            "completion_tokens": c_tokens,
+            "latency_s": round(elapsed, 2),
+            "response": response,
+        }
+        with open(log_path, "a", encoding="utf-8") as f:
+            f.write(json.dumps(entry) + "\n")
+    except Exception as e:
+        print(f"⚠️ Could not write JSONL telemetry: {e}")
+
+
 # --- API CLIENT ---
 class LLMClient:
     def __init__(self):
@@ -125,6 +148,17 @@ class LLMClient:
             elapsed = time.time() - start_time
 
             log_token_usage(agent_name, "litellm", model, p_tokens, c_tokens, elapsed)
+            log_jsonl_telemetry(
+                agent_name,
+                "litellm",
+                model,
+                p_tokens,
+                c_tokens,
+                elapsed,
+                system_prompt,
+                user_prompt,
+                text,
+            )
 
             return text
 

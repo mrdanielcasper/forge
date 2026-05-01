@@ -1,3 +1,4 @@
+import json
 import os
 
 import orchestrator
@@ -10,6 +11,7 @@ from orchestrator import (
     get_active_artifacts,
     is_path_safe,
     list_directory,
+    log_jsonl_telemetry,
     read_directory_contents,
     read_file,
     run_shell_command,
@@ -185,3 +187,22 @@ def test_get_active_artifacts(tmp_path, monkeypatch) -> None:
     artifacts = get_active_artifacts()
     assert "docs/company/thesis.md" in artifacts
     assert "docs/product/flows.md" in artifacts
+
+
+def test_log_jsonl_telemetry(tmp_path, monkeypatch) -> None:
+    """Ensure full execution telemetry is written to JSONL for observability."""
+    monkeypatch.setattr(orchestrator, "DOCS_DIR", str(tmp_path / "docs"))
+
+    log_jsonl_telemetry(
+        "Engineering", "litellm", "gpt-4o", 10, 20, 1.5, "sys", "usr", "response_text"
+    )
+
+    log_file = tmp_path / "docs" / "ops" / "telemetry.jsonl"
+    assert log_file.exists()
+
+    content = log_file.read_text(encoding="utf-8").strip()
+    data = json.loads(content)
+
+    assert data["agent"] == "Engineering"
+    assert data["response"] == "response_text"
+    assert data["prompt_tokens"] == 10
