@@ -2,12 +2,20 @@ import json
 import os
 import re
 import shlex
+import shutil
 import subprocess
 import sys
 import time
 from pathlib import Path
 
 import litellm
+
+# SHIFT-LEFT: Explicit whitelist of allowed command prefixes
+ALLOWED_COMMANDS = (
+    "npm run ",
+    "uv run ",
+    "pytest ",
+)
 
 # --- ABSOLUTE PATH RESOLUTION ---
 # This ensures the OS can be run from ANY directory without corrupting memory
@@ -267,60 +275,45 @@ def append_file(filepath, content):
         return f"[ERROR: Failed to append to {filepath} - {e}]"
 
 
-def run_shell_command(command):
-    """Executes an isolated shell command and returns stdout/stderr."""
-    # Strict whitelist of allowed automated commands
-    allowed_prefixes = [
-        "uv run pytest",
-        "npm run",
-        "npx playwright",
-        "npx @biomejs/biome",
-        "mv ",
-        "move ",
-    ]
-
-    if not any(command.startswith(prefix) for prefix in allowed_prefixes):
-        print(f"🛑 SECURITY BLOCK: AI attempted unauthorized command: {command}")
+def run_shell_command(command: str) -> str:
+    """Executes a whitelisted shell command and returns its output safely."""
+    # 1. Sandbox Checks
+    if not command.startswith(ALLOWED_COMMANDS):
         return f"[ERROR: Command '{command}' not allowed.]"
 
-    # Prevent shell injection (e.g., 'uv run pytest && rm -rf /')
-    dangerous_chars = ["&&", ";", "|", ">", "<", "`", "$"]
-    if any(char in command for char in dangerous_chars):
-        print(f"🛑 SECURITY BLOCK: AI attempted shell chaining/injection: {command}")
-        return "[ERROR: Shell chaining and redirection are strictly prohibited.]"
-
-    # Safely parse the command string into a list for subprocess
-    try:
-        args = shlex.split(command, posix=False)
-    except ValueError as e:
-        return f"[ERROR: Failed to parse command - {str(e)}]"
+    if any(char in command for char in ["&", "|", ";", ">", "<"]):
+        return "[ERROR: Shell injection prohibited.]"
 
     try:
-        print(f"⚙️ Running automated tests: {command}")
+        args = shlex.split(command)
+
+        # SHIFT-LEFT: Cross-Platform Executable Resolution
+        # Windows requires the exact .cmd/.exe path if shell=False
+        if os.name == "nt":
+            executable = shutil.which(args[0])
+            if executable:
+                args[0] = executable
+
+        # 2. Strict Execution
+        print(f"    $ {command}")
+
+        # noqa: S603 tells the linter we have explicitly sandboxed this input
         result = subprocess.run(  # noqa: S603
-            args,  # <-- Pass the list, not the raw string
-            shell=False,  # <-- THE CRITICAL FIX
-            cwd=BASE_DIR,
-            capture_output=True,
-            text=True,
-            encoding="utf-8",
-            timeout=60,
+            args, capture_output=True, text=True, timeout=60, shell=False
         )
 
-        output = result.stdout if result.returncode == 0 else result.stderr
-        output = output.strip() if output else "[Process completed with no output]"
+        output = result.stdout.strip()
+        error = result.stderr.strip()
 
-        # --- NEW FIX: Bounded Shell Logs to prevent API Token Burn ---
-        if len(output) > 3000:
-            output = (
-                output[:500]
-                + "\n\n...[SYSTEM NOTE: MASSIVE LOG TRUNCATED TO SAVE TOKENS]...\n\n"
-                + output[-2500:]
-            )
+        if result.returncode == 0:
+            return output if output else f"[SUCCESS: {command}]"
+        else:
+            return f"[ERROR: Command execution failed - {error}]"
 
-        return output
+    except subprocess.TimeoutExpired:
+        return "[ERROR: Command timed out after 60 seconds.]"
     except Exception as e:
-        return f"[ERROR: Command execution failed - {e}]"
+        return f"[ERROR: Command execution failed - {str(e)}]"
 
 
 # --- DETERMINISTIC CONTEXT PRUNING ---
