@@ -360,19 +360,18 @@ def extract_section(filepath, section_header):
 
 
 def get_active_artifacts():
-    """Parses current_run.md to extract the exact file paths of active artifacts."""
+    """Parses current_run.md to extract active artifacts without strict formatting dependencies."""
     run_path = os.path.join(DOCS_DIR, "product", "current_run.md")
     content = read_file(run_path)
 
     artifacts = []
-    match = re.search(r"(?i)## Linked Artifacts(.*?)(?=\n## |\Z)", content, re.DOTALL)
-    if match:
-        block = match.group(1)
-        # SHIFT-LEFT: Match any file path (docs, src, public) inside a markdown bullet list
-        paths = re.findall(r"[-*]\s*[`*]*([a-zA-Z0-9_./-]+)[`*]*", block)
-        for path in paths:
-            if "current_run.md" not in path:
-                artifacts.append(path)
+    # SHIFT-LEFT: Match any project file path anywhere in the document.
+    # No brittle headers required.
+    paths = re.findall(r"(?:docs|src|public|tests)[a-zA-Z0-9_./-]+\.[a-zA-Z0-9]+", content)
+    
+    for path in set(paths): # Deduplicate identical paths
+        if "current_run.md" not in path:
+            artifacts.append(path)
 
     return artifacts
 
