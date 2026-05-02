@@ -364,17 +364,13 @@ def get_active_artifacts():
     run_path = os.path.join(DOCS_DIR, "product", "current_run.md")
     content = read_file(run_path)
 
-    # Find all lines in the Linked Artifacts section that contain a file path
     artifacts = []
-
-    # Extract the block between Linked Artifacts and the next header
     match = re.search(r"(?i)## Linked Artifacts(.*?)(?=\n## |\Z)", content, re.DOTALL)
     if match:
         block = match.group(1)
-        # Find anything that looks like a markdown path
-        paths = re.findall(r"(docs/[a-zA-Z0-9_/-]+\.md)", block)
+        # SHIFT-LEFT: Match any file path (docs, src, public) inside a markdown bullet list
+        paths = re.findall(r"[-*]\s*[`*]*([a-zA-Z0-9_./-]+)[`*]*", block)
         for path in paths:
-            # Make sure we don't accidentally load current_run.md inside current_run.md
             if "current_run.md" not in path:
                 artifacts.append(path)
 
