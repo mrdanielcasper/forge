@@ -62,6 +62,22 @@ You are the CEO, the lead investor, and the final decision-maker. You **do not**
 
 ---
 
+## 🛡️ Layer 1 Structural Evals (AST Validation)
+Forge utilizes an Abstract Syntax Tree (AST) validator to enforce Zero-Debt coding standards *before* compilation. 
+
+Instead of relying on LLM-as-a-judge for simple structural rules, Forge uses Babel to parse the raw `.tsx` files and mathematically prove compliance.
+
+**Current Enforced AST Rules:**
+- 🚫 **No Inline Styles:** Tailwind CSS classes (`className`) are strictly required. The `style={{}}` prop will fail the build.
+- 🖼️ **Accessible Images:** All `<img>` tags must contain an `alt` attribute.
+
+To run the structural evaluation locally:
+```bash
+npm run eval:ast src/web/components/YourComponent.tsx
+```
+
+---
+
 ## 📁 Repository Structure & Canonical Documents
 
 ```text
