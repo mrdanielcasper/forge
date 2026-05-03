@@ -145,7 +145,9 @@ class LLMClient:
             elif provider == "anthropic":
                 model = "claude-3-5-sonnet-latest"
             else:
-                model = "anthropic/claude-3.5-sonnet"
+                # --- ZERO-COST TRACER BULLET FIX ---
+                # Replaced "anthropic/claude-3.5-sonnet" with a 100% free model
+                model = "meta-llama/llama-3.3-70b-instruct:free"
 
         if provider not in PROVIDERS:
             print(f"❌ ERROR: Provider '{provider}' is not configured in PROVIDERS dict.")
@@ -420,7 +422,7 @@ def assemble_context(agent_name):
         context += read_file(os.path.join(DOCS_DIR, "product", "style_guide.md"))
         context += read_file(os.path.join(BASE_DIR, "src", "web", "lib", "content.ts"))
 
-        # FIX: Give Design the actual Briefs and Contracts!
+        # Give Design the actual Briefs and Contracts!
         context += f"\n\n--- FEATURE BRIEFS ---\n{read_directory_contents(briefs_dir)}"
         context += f"\n\n--- DATA CONTRACTS ---\n{read_directory_contents(contracts_dir)}"
         context += f"\n\n--- PUBLIC ASSETS ---\n{list_directory(public_dir)}"
@@ -436,7 +438,7 @@ def assemble_context(agent_name):
         context += read_file(os.path.join(DOCS_DIR, "product", "style_guide.md"))
         context += read_file(os.path.join(BASE_DIR, "src", "web", "lib", "content.ts"))
 
-        # FIX: Give Engineering the actual Briefs and Contracts!
+        # Give Engineering the actual Briefs and Contracts!
         context += f"\n\n--- FEATURE BRIEFS ---\n{read_directory_contents(briefs_dir)}"
         context += f"\n\n--- DATA CONTRACTS ---\n{read_directory_contents(contracts_dir)}"
         context += f"\n\n--- PUBLIC ASSETS ---\n{list_directory(public_dir)}"
