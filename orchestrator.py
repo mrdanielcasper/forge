@@ -586,6 +586,14 @@ def run_os(user_input, flags=None):
     print("=== Solopreneur OS Initialized ===")
     print(f"🔧 Smart Routing: {'ON' if SMART_ROUTING else 'OFF'}")
 
+    # --- SHIFT-LEFT: TELEMETRY PRUNING ---
+    # Wipe the telemetry file clean at the start of every new run to save tokens!
+    telemetry_path = os.path.join(DOCS_DIR, "ops", "telemetry.jsonl")
+    os.makedirs(os.path.dirname(telemetry_path), exist_ok=True)
+    with open(telemetry_path, "w", encoding="utf-8") as f:
+        f.write("")
+    # -------------------------------------
+
     agent_queue = []
 
     if "[HOTFIX]" in user_input:
