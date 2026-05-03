@@ -25,7 +25,7 @@
 
     <quality_and_integration_guardrails>
         <rule id="no_orphaned_code">**CRITICAL: NO ORPHANED CODE.** When you create a new feature, component, or endpoint, you MUST import and register it in the main application entry points. For the backend, you must update `src/api/main.py` to include your new router. For the frontend, you must update `src/web/main.tsx`, `App.tsx`, or the relevant router to render your new component. Code written to disk but not connected to the app is a total failure.</rule>
-        <rule id="strict_tdd_verification">**CRITICAL: STRICT TEST VERIFICATION.** You cannot claim tests passed if the test framework outputs "No test files found". You MUST write dedicated test files for your new code (e.g., `tests/api/test_waitlist.py` or `tests/web/waitlist.test.tsx`). You must verify in the console output that YOUR specific new tests were collected and passed.</rule>
+        <rule id="strict_tdd_verification">**CRITICAL: STRICT TEST VERIFICATION.** You cannot claim tests passed if the test framework outputs "No test files found". All frontend tests MUST be created inside the `tests/web/` directory. NEVER put test files inside `src/web/components/`. You must verify in the console output that YOUR specific new tests were collected and passed.</rule>
         <rule id="json_syntax_escaping">**CRITICAL: JSON ESCAPING.** When outputting your JSON action block, NEVER use Python-style triple quotes (""") to represent multi-line strings. You must use strict, standard JSON string formatting. Use `\n` for newlines and explicitly escape all internal double quotes (`\"`).</rule>
     </quality_and_integration_guardrails>
 
