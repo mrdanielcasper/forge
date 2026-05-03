@@ -34,7 +34,9 @@ traverse(ast, {
   // RULE 2: Enforce Accessibility (Images must have alt tags)
   JSXOpeningElement(path) {
     if (path.node.name.name === "img") {
-      const hasAlt = path.node.attributes.some((attr) => attr.name && attr.name.name === "alt");
+      const hasAlt = path.node.attributes.some(
+        (attr) => attr.name && attr.name.name === "alt",
+      );
       if (!hasAlt) {
         console.error(
           `❌ AST Violation: <img> tag missing 'alt' attribute at line ${path.node.loc.start.line}.`,

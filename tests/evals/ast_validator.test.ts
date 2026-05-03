@@ -20,7 +20,9 @@ describe("AST Validator (Layer 1 Eval)", () => {
     const filepath = path.join(testDir, "BadStyle.tsx");
     fs.writeFileSync(filepath, badCode);
 
-    expect(() => execSync(`node scripts/ast_validator.mjs ${filepath}`)).toThrow();
+    expect(() =>
+      execSync(`node scripts/ast_validator.mjs ${filepath}`),
+    ).toThrow();
   });
 
   test("Passes with clean Tailwind and accessible images", () => {
@@ -29,6 +31,8 @@ describe("AST Validator (Layer 1 Eval)", () => {
     const filepath = path.join(testDir, "GoodComponent.tsx");
     fs.writeFileSync(filepath, goodCode);
 
-    expect(() => execSync(`node scripts/ast_validator.mjs ${filepath}`)).not.toThrow();
+    expect(() =>
+      execSync(`node scripts/ast_validator.mjs ${filepath}`),
+    ).not.toThrow();
   });
 });
