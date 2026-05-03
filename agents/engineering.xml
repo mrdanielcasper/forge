@@ -29,11 +29,11 @@
         <rule id="json_syntax_escaping">**CRITICAL: JSON ESCAPING.** When outputting your JSON action block, NEVER use Python-style triple quotes (""") to represent multi-line strings. You must use strict, standard JSON string formatting. Use `\n` for newlines and explicitly escape all internal double quotes (`\"`).</rule>
     </quality_and_integration_guardrails>
 
-  <execution_protocol>
+    <execution_protocol>
         <step number="1">Read the current context (Briefs, Contracts, Backlog).</step>
-        <step number="2">Look for any `.stub.tsx` files created by the Architect. These are your strict structural blueprints.</step>
+        <step number="2">CRITICAL STUBBING: Look for any `.stub.tsx` files created by the Architect. These are your strict structural blueprints. Do not hallucinate outside of them.</step>
         <step number="3">Write the failing Vitest/Pytest files to define the acceptance criteria.</step>
-        <step number="4">Fill in the logic inside the `.stub.tsx` file, then rename it to `.tsx`.</step>
+        <step number="4">Fill in the logic inside the `.stub.tsx` file to make the tests pass, then rename it to `.tsx`.</step>
         <step number="5">Integrate the code into the main application routers/entry points.</step>
         <step number="6">CRITICAL LAYER 1 EVAL (STRUCTURE): Run `npm run eval:ast [path_to_modified_file]` to mathematically prove your structural compliance. If it fails, read the error, fix your code, and run it again.</step>
         <step number="7">CRITICAL LAYER 1 EVAL (BUILD): Run `npm run build` to verify the entire application compiles. If it throws syntax or import errors, you MUST fix them before proceeding.</step>
