@@ -526,6 +526,42 @@ def extract_routing_queue(response_text):
     return None
 
 
+def auto_lint_file(filepath):
+    """Zero-Cost Pre-Audit: Automatically lints files immediately after they are written."""
+    abs_path = os.path.join(BASE_DIR, filepath) if not os.path.isabs(filepath) else filepath
+    ext = os.path.splitext(abs_path)[1]
+    
+    args = []
+    if ext == ".py":
+        args = ["uv", "run", "ruff", "check", "--no-cache", abs_path]
+    elif ext in [".ts", ".tsx", ".js", ".jsx"]:
+        # Forge uses Biome for JS/TS
+        args = ["npx", "biome", "check", abs_path]
+    else:
+        return None  # No auto-linter for this file type
+
+    # Cross-Platform Executable Resolution (Windows Support)
+    if os.name == "nt":
+        executable = shutil.which(args[0])
+        if executable:
+            args[0] = executable
+
+    try:
+        result = subprocess.run(
+            args,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            timeout=30,
+            shell=False
+        )
+        if result.returncode != 0:
+            return f"[⚠️ AUTO-LINT FAILED on {filepath}]:\n{result.stdout}\n{result.stderr}\nFix this syntax error before proceeding."
+        return f"[✅ AUTO-LINT PASSED for {filepath}]"
+    except Exception as e:
+        return f"[⚠️ AUTO-LINT EXECUTION ERROR on {filepath}]: {e}"
+
+
 def execute_autonomous_actions(response_text):
     """Scans the AI's response for a JSON payload and executes the sandbox tools."""
     # Look for a JSON block explicitly tagged for the OS
@@ -547,6 +583,12 @@ def execute_autonomous_actions(response_text):
                 if path and content:
                     result = write_file(path, content)
                     execution_logs.append(result)
+                    
+                    # --- SHIFT-LEFT: FORGE AUTO-LINTING ---
+                    if "SUCCESS" in result:
+                        lint_result = auto_lint_file(path)
+                        if lint_result:
+                            execution_logs.append(lint_result)
 
         # 1.5 Execute File Appends (Scalpel)
         if "append_to_file" in payload:
@@ -556,6 +598,12 @@ def execute_autonomous_actions(response_text):
                 if path and content:
                     result = append_file(path, content)
                     execution_logs.append(result)
+                    
+                    # --- SHIFT-LEFT: FORGE AUTO-LINTING ---
+                    if "SUCCESS" in result:
+                        lint_result = auto_lint_file(path)
+                        if lint_result:
+                            execution_logs.append(lint_result)
 
         # 2. Execute Shell Commands (Testing/Linting)
         if "run_commands" in payload:
