@@ -12,7 +12,7 @@ from pathlib import Path
 # This ensures the OS can be run from ANY directory without corrupting memory
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DOCS_DIR = os.path.join(BASE_DIR, "docs")
-SKILLS_DIR = os.path.join(BASE_DIR, "agents")
+AGENTS_DIR = os.path.join(BASE_DIR, "agents")
 
 # --- PRE-FLIGHT BOOT CHECK ---
 # Ensures users have installed dependencies before the OS tries to run automated tests
@@ -593,7 +593,7 @@ def run_os(user_input, flags=None):
         }
 
         skill_file = skill_file_map.get(base_skill, "engineering.xml")
-        skill_prompt = read_file(os.path.join(SKILLS_DIR, skill_file))
+        skill_prompt = read_file(os.path.join(AGENTS_DIR, skill_file))
 
         print(f"\n[🚀 Waking up {current_agent} Agent...]")
 
