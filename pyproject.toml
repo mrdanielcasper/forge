@@ -37,7 +37,7 @@ ignore = []
 [tool.pytest.ini_options]
 addopts = "-v --strict-markers --cov=orchestrator --cov-report=term-missing --cov-fail-under=40"
 pythonpath = "."
-testpaths = ["tests/api"] 
+testpaths = ["tests/api", "tests/evals"] 
 markers = [
     "core: core system functionality",
     "integration: testing 3rd party APIs",
