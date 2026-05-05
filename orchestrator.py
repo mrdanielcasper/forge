@@ -304,11 +304,11 @@ def run_shell_command(command: str) -> str:
 
         # noqa: S603 tells the linter we have explicitly sandboxed this input
         result = subprocess.run(  # noqa: S603
-            args, 
-            capture_output=True, 
+            args,
+            capture_output=True,
             text=True,
-            encoding="utf-8", 
-            timeout=60, 
+            encoding="utf-8",
+            timeout=60,
             shell=False,
         )
 
@@ -368,7 +368,7 @@ def get_active_artifacts():
     # SHIFT-LEFT: Match any project file path anywhere in the document.
     # Pattern matches common project paths: docs/, src/, public/, tests/ with typical extensions.
     paths = re.findall(r"(?:docs|src|public|tests)[a-zA-Z0-9_./-]+\.[a-zA-Z0-9]+", content)
-    
+
     for path in set(paths):  # Deduplicate identical paths
         if "current_run.md" not in path:
             artifacts.append(path)
@@ -530,7 +530,7 @@ def auto_lint_file(filepath):
     """Zero-Cost Pre-Audit: Automatically lints files immediately after they are written."""
     abs_path = os.path.join(BASE_DIR, filepath) if not os.path.isabs(filepath) else filepath
     ext = os.path.splitext(abs_path)[1]
-    
+
     args = []
     if ext == ".py":
         args = ["uv", "run", "ruff", "check", "--no-cache", abs_path]
@@ -549,12 +549,7 @@ def auto_lint_file(filepath):
     try:
         # noqa: S603 tells the linter we explicitly control the args array
         result = subprocess.run(  # noqa: S603
-            args,
-            capture_output=True,
-            text=True,
-            encoding="utf-8",
-            timeout=30,
-            shell=False
+            args, capture_output=True, text=True, encoding="utf-8", timeout=30, shell=False
         )
         if result.returncode != 0:
             # Wrap the long string in parentheses to comply with the 100-char limit
@@ -589,7 +584,7 @@ def execute_autonomous_actions(response_text):
                 if path and content:
                     result = write_file(path, content)
                     execution_logs.append(result)
-                    
+
                     # --- SHIFT-LEFT: FORGE AUTO-LINTING ---
                     if "SUCCESS" in result:
                         lint_result = auto_lint_file(path)
@@ -604,7 +599,7 @@ def execute_autonomous_actions(response_text):
                 if path and content:
                     result = append_file(path, content)
                     execution_logs.append(result)
-                    
+
                     # --- SHIFT-LEFT: FORGE AUTO-LINTING ---
                     if "SUCCESS" in result:
                         lint_result = auto_lint_file(path)
