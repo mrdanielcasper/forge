@@ -264,18 +264,9 @@ def append_file(filepath, content):
 
     try:
         os.makedirs(os.path.dirname(abs_path), exist_ok=True)
-
-        # Check if the file currently exists and ensure it ends with a newline
-        prefix = ""
-        if os.path.exists(abs_path):
-            with open(abs_path, encoding="utf-8") as f:
-                current_content = f.read()
-                if current_content and not current_content.endswith("\n"):
-                    prefix = "\n"
-
         with open(abs_path, "a", encoding="utf-8") as f:
-            f.write(prefix + content + "\n")
-        return f"[SUCCESS: Data appended to {filepath}]"
+            f.write(content)
+        return f"[SUCCESS: File appended to {filepath}]"
     except Exception as e:
         return f"[ERROR: Failed to append to {filepath} - {e}]"
 
@@ -312,13 +303,29 @@ def run_shell_command(command: str) -> str:
             shell=False,
         )
 
-        output = result.stdout.strip()
-        error = result.stderr.strip()
+        # --- SHIFT-LEFT: TERMINAL EXHAUST TRUNCATION ---
+        # Never send more than 1000 characters of a terminal error back to the LLM
+        def truncate_output(text, max_len=1000):
+            if not text or len(text) <= max_len:
+                return text
+            half = max_len // 2
+            # Broken into multiple lines to fix Ruff E501 (Line too long)
+            return (
+                text[:half] + 
+                f"\n\n...[TRUNCATED {len(text) - max_len} CHARS]...\n\n" + 
+                text[-half:]
+            )
+
+        output = truncate_output(result.stdout.strip())
+        error = truncate_output(result.stderr.strip())
+        # -----------------------------------------------
 
         if result.returncode == 0:
             return output if output else f"[SUCCESS: {command}]"
         else:
-            return f"[ERROR: Command execution failed - {error}]"
+            # If there is stdout alongside the error, include a snippet of it
+            err_msg = error if error else output
+            return f"[ERROR: Command execution failed - {err_msg}]"
 
     except subprocess.TimeoutExpired:
         return "[ERROR: Command timed out after 60 seconds.]"
