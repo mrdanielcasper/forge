@@ -169,7 +169,8 @@ def test_actual_file_io(tmp_path, monkeypatch) -> None:
 
     # Test read_directory_contents
     dir_res = read_directory_contents(str(docs_dir))
-    assert "--- FILE: test.md ---" in dir_res
+    # SHIFT-LEFT: Updated test to check for the new XML caching tags
+    assert '<document path="test.md">' in dir_res
 
 
 def test_get_active_artifacts(tmp_path, monkeypatch) -> None:
