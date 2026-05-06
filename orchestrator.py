@@ -320,12 +320,21 @@ def run_shell_command(command: str) -> str:
         error = truncate_output(result.stderr.strip())
         # -----------------------------------------------
 
+        # --- SHIFT-LEFT: TOKEN ECONOMICS (TRUNCATION) ---
+        combined_output = output
+        if error:
+            combined_output += f"\nSTDERR:\n{error}"
+            
+        if len(combined_output) > 8000:
+            combined_output = (
+                combined_output[:8000] + 
+                "\n\n...[SYSTEM WARNING: Output truncated at 8000 characters to save context.]..."
+            )
+
         if result.returncode == 0:
-            return output if output else f"[SUCCESS: {command}]"
+            return combined_output if combined_output else f"[SUCCESS: {command}]"
         else:
-            # If there is stdout alongside the error, include a snippet of it
-            err_msg = error if error else output
-            return f"[ERROR: Command execution failed - {err_msg}]"
+            return f"[ERROR: Command execution failed]\n{combined_output}"
 
     except subprocess.TimeoutExpired:
         return "[ERROR: Command timed out after 60 seconds.]"
@@ -410,7 +419,7 @@ def read_directory_contents(dir_path):
             # Currently restricted to markdown
             if filename.endswith(".md"):
                 filepath = os.path.join(dir_path, filename)
-                content += f"\n--- FILE: {filename} ---\n{read_file(filepath)}\n"
+                content += f'\n<document path="{filename}">\n{read_file(filepath)}\n</document>\n'
     except FileNotFoundError:
         pass
     return content
@@ -440,9 +449,8 @@ def assemble_context(agent_name):
         # --- CONTEXT FUNNELING: Only load active artifacts ---
         context += "\n\n--- ACTIVE FEATURE ARTIFACTS ---\n"
         for artifact_path in get_active_artifacts():
-            fname = os.path.basename(artifact_path)
             fcontent = read_file(os.path.join(BASE_DIR, artifact_path))
-            context += f"\n--- FILE: {fname} ---\n{fcontent}\n"
+            context += f'\n<document path="{artifact_path}">\n{fcontent}\n</document>\n'
 
         # List existing contracts instead of reading all their contents to save tokens
         contract_list = list_directory(contracts_dir)
