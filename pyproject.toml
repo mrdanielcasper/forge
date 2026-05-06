@@ -35,9 +35,11 @@ ignore = []
 "tests/**/*.py" = ["S101"]
 
 [tool.pytest.ini_options]
-addopts = "-v -m \"not eval\" --strict-markers --cov=orchestrator --cov-report=term-missing --cov-fail-under=40"
+# Added --cov=engine so it tracks our new directory
+addopts = "-v -m \"not eval\" --strict-markers --cov=engine --cov-report=term-missing --cov-fail-under=80"
 pythonpath = "."
-testpaths = ["tests/api", "tests/evals"] 
+# Added "tests/engine" to the discovery paths
+testpaths = ["tests/engine", "tests/api", "tests/evals"] 
 markers = [
     "core: core system functionality",
     "integration: testing 3rd party APIs",

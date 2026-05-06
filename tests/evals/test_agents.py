@@ -2,7 +2,9 @@ import os
 
 import pytest
 
-from orchestrator import LLMClient, assemble_context, extract_routing_queue, read_file
+from engine.llm import LLMClient
+from engine.runtime import assemble_context, extract_routing_queue
+from engine.tools import read_file
 
 
 @pytest.fixture(scope="module")
