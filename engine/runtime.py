@@ -3,6 +3,7 @@ import os
 import re
 import sys
 
+from engine.ast_parser import generate_project_stub
 from engine.llm import SMART_ROUTING, LLMClient
 from engine.tools import (
     AGENTS_DIR,
@@ -44,6 +45,16 @@ def assemble_context(agent_name):
     contracts_dir = os.path.join(DOCS_DIR, "product", "contracts")
     public_dir = os.path.join(BASE_DIR, "public")
     ui_components_dir = os.path.join(BASE_DIR, "src", "web", "components", "ui")
+
+    # --- SHIFT-LEFT: AST OMNISCIENCE INJECTION ---
+    try:
+        src_dir = os.path.join(BASE_DIR, "src")
+        if os.path.exists(src_dir):
+            ast_map = generate_project_stub(src_dir)
+            context += f"\n\n--- PROJECT ARCHITECTURE SKELETON (AST MAP) ---\n{ast_map}\n"
+    except Exception as e:
+        print(f"⚠️ Warning: AST Parsing failed. {e}")
+    # ---------------------------------------------
 
     if "Strategy" in agent_name:
         context += read_file(os.path.join(DOCS_DIR, "company", "thesis.md"))
