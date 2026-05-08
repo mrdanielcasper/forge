@@ -1,27 +1,23 @@
 # Current Run
 
-## Active Feature
+<feature_spec id="B-000" mode="Build">
+  <name>System Status (Golden Exemplar)</name>
+  <goal>Provide a robust, end-to-end full-stack slice that proves the frontend, backend, and testing architectures are fully operational and correctly mapped.</goal>
+</feature_spec>
 
-- Name: System Status (Golden Exemplar)
-- Backlog ID: B-000
-- Goal: Provide a robust, end-to-end full-stack slice that proves the frontend, backend, and testing architectures are fully operational and correctly mapped.
-- Operating Mode: Build
+<artifacts>
+  <link type="Brief">docs/product/briefs/system_status.md</link>
+  <link type="Contract">docs/product/contracts/system_status.md</link>
+  <link type="Architecture">docs/product/architecture.md</link>
+</artifacts>
 
-## Linked Artifacts
+<definition_of_done>
+  <requirement status="complete">Feature brief is current and accepted.</requirement>
+  <requirement status="complete">Contract covers success, error, loading, and security-sensitive behavior.</requirement>
+  <requirement status="complete">UI states are defined for configuration and validation.</requirement>
+  <requirement status="complete">Live delivery path is implemented and tested.</requirement>
+</definition_of_done>
 
-- Brief: docs/product/briefs/system_status.md
-- Contract: docs/product/contracts/system_status.md
-- Architecture: docs/product/architecture.md
-- Launch Checklist: docs/ops/launch_checklist.md
-
-## Definition Of Done
-
-- [x] Feature brief is current and accepted.
-- [x] Contract covers success, error, loading, and security-sensitive behavior.
-- [x] UI states are defined for configuration and validation.
-- [x] Live delivery path is implemented and tested.
-- [x] Failure path is explicitly tested end-to-end in the browser.
-
-## Active Tasks
-
-Golden Exemplar is complete and verified. Factory is ready for the next feature.
+<active_tasks>
+  Golden Exemplar is complete and verified. Factory is ready for the next feature.
+</active_tasks>

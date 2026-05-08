@@ -4,10 +4,15 @@ from engine.cli import main
 
 
 def test_cli_requires_prompt(monkeypatch, capsys):
+    from engine.cli import main
     monkeypatch.setattr("engine.cli.boot", lambda: None)
+    
+    # SHIFT-LEFT: Prevent the test from reading a stale handoff.md file on disk
+    monkeypatch.setattr("os.path.exists", lambda path: False)
 
+    # ADD "as excinfo" HERE:
     with pytest.raises(SystemExit) as excinfo:
-        main([])  # No args
+        main([])
 
     captured = capsys.readouterr()
     assert "Usage: python engine/cli.py 'Your prompt'" in captured.out

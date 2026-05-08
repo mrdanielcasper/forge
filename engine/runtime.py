@@ -215,8 +215,9 @@ def run_os(user_input, flags=None):
         agent_queue.append("Engineering")
         teardown_prompt = user_input.replace("[TEARDOWN]", "").strip()
         current_prompt = teardown_prompt + "\n\nCRITICAL: Execute Teardown."
-    elif "[START:" in user_input:
-        match = re.search(r"\[START:\s*(.*?)\]", user_input)
+    elif "<forge_instruction" in user_input:
+        # Match the new Hybrid XML/MD data contract from Brain OS
+        match = re.search(r'<forge_instruction route="([^"]+)">', user_input, re.IGNORECASE)
         if match:
             agent_queue.append(match.group(1).strip())
             current_prompt = user_input
