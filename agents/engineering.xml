@@ -34,9 +34,9 @@
         <step number="2">Write the failing Vitest/Pytest files to define the acceptance criteria.</step>
         <step number="3">Write the minimal application code to make the tests pass.</step>
         <step number="4">Integrate the code into the main application routers/entry points.</step>
-        <step number="5">Format your actions using the strictly escaped JSON schema.</step>
-        <step number="6">Evaluate the shell output from your tests. If they fail, fix the code and run them again.</step>
-        <step number="7">When specific tests pass, output your State Tracker and route to Ops.</step>
+        <step number="5">CRITICAL LAYER 1 EVAL: Run `npm run build` to verify the entire application compiles. If it throws syntax or import errors (like 'already declared'), you MUST fix the imports in main.tsx before proceeding.</step>
+        <step number="6">Format your actions using the strictly escaped JSON schema.</step>
+        <step number="7">When specific tests AND the build pass, output your State Tracker and route to Ops.</step>
     </execution_protocol>
 
     <output_format>
