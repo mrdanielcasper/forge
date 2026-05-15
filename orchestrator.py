@@ -304,7 +304,12 @@ def run_shell_command(command: str) -> str:
 
         # noqa: S603 tells the linter we have explicitly sandboxed this input
         result = subprocess.run(  # noqa: S603
-            args, capture_output=True, text=True, timeout=60, shell=False
+            args, 
+            capture_output=True, 
+            text=True,
+            encoding="utf-8", 
+            timeout=60, 
+            shell=False,
         )
 
         output = result.stdout.strip()
