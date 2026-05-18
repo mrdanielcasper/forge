@@ -206,3 +206,44 @@ def test_log_jsonl_telemetry(tmp_path, monkeypatch) -> None:
     assert data["agent"] == "Engineering"
     assert data["response"] == "response_text"
     assert data["prompt_tokens"] == 10
+
+
+def test_auto_lint_file_python_success(mocker):
+    """Ensure the Forge auto-linter correctly triggers ruff for Python files and passes."""
+    from orchestrator import auto_lint_file
+
+    mock_run = mocker.patch("subprocess.run")
+    # Simulate a successful ruff check (exit code 0)
+    mock_run.return_value = mocker.MagicMock(returncode=0)
+
+    result = auto_lint_file("src/api/main.py")
+
+    assert "✅ AUTO-LINT PASSED" in result
+    mock_run.assert_called_once()
+
+    # Prove it specifically chose the Python linter
+    called_command = mock_run.call_args[0][0]
+    assert "ruff" in called_command
+    assert "check" in called_command
+
+
+def test_auto_lint_file_typescript_failure(mocker):
+    """Ensure the Forge auto-linter triggers biome for TS files and catches syntax errors."""
+    from orchestrator import auto_lint_file
+
+    mock_run = mocker.patch("subprocess.run")
+    # Simulate a failed biome check (exit code 1)
+    mock_run.return_value = mocker.MagicMock(
+        returncode=1, stdout="Expected an identifier, but found '}'", stderr=""
+    )
+
+    result = auto_lint_file("src/web/components/ui/button.tsx")
+
+    assert "⚠️ AUTO-LINT FAILED" in result
+    assert "Expected an identifier" in result
+    mock_run.assert_called_once()
+
+    # Prove it specifically chose the Frontend linter
+    called_command = mock_run.call_args[0][0]
+    assert "biome" in called_command
+    assert "check" in called_command

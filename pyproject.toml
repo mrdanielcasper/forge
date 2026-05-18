@@ -18,6 +18,7 @@ dev = [
     "pytest-cov>=5.0.0",
     "ruff>=0.3.0",
     "httpx>=0.27.0",
+    "pytest-mock>=3.15.1",
 ]
 
 [tool.ruff]
@@ -34,9 +35,9 @@ ignore = []
 "tests/**/*.py" = ["S101"]
 
 [tool.pytest.ini_options]
-addopts = "-v --strict-markers --cov=orchestrator --cov-report=term-missing --cov-fail-under=40"
+addopts = "-v -m \"not eval\" --strict-markers --cov=orchestrator --cov-report=term-missing --cov-fail-under=40"
 pythonpath = "."
-testpaths = ["tests/api"] 
+testpaths = ["tests/api", "tests/evals"] 
 markers = [
     "core: core system functionality",
     "integration: testing 3rd party APIs",
