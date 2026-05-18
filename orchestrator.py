@@ -264,9 +264,20 @@ def append_file(filepath, content):
 
     try:
         os.makedirs(os.path.dirname(abs_path), exist_ok=True)
+
+        # Check if the file currently exists and ensure it ends with a newline
+        prefix = ""
+        if os.path.exists(abs_path):
+            with open(abs_path, encoding="utf-8") as f:
+                current_content = f.read()
+                if current_content and not current_content.endswith("\n"):
+                    prefix = "\n"
+
+        # Append the prefix, the content, and a trailing newline
         with open(abs_path, "a", encoding="utf-8") as f:
-            f.write(content)
-        return f"[SUCCESS: File appended to {filepath}]"
+            f.write(prefix + content + "\n")
+            
+        return f"[SUCCESS: Data appended to {filepath}]"
     except Exception as e:
         return f"[ERROR: Failed to append to {filepath} - {e}]"
 
