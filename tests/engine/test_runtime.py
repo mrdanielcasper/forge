@@ -143,4 +143,4 @@ def test_run_os_execution_loop(monkeypatch, tmp_path):
     runtime.run_os("[TEARDOWN] Remove the new feature")
 
     # 4. Test START OVERRIDE routing
-    runtime.run_os("[START: Design] Make it pretty")
+    runtime.run_os('<forge_instruction route="Design">Make it pretty</forge_instruction>')
